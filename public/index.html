@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📊 James Command Center - Project Dashboard</title>
+    <title>📊 James Command Center - Project Dashboard v2.5</title>
     <style>
         :root {
-            /* Dark Theme (Default) */
             --bg-primary: #0f0f23;
             --bg-secondary: #1a1a2e;
             --bg-card: #16213e;
@@ -22,9 +21,9 @@
             --border-color: #2d2d4a;
             --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
             --header-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --chart-bg: rgba(0, 0, 0, 0.2);
         }
 
-        /* Light Theme */
         [data-theme="light"] {
             --bg-primary: #f8fafc;
             --bg-secondary: #ffffff;
@@ -41,13 +40,10 @@
             --border-color: #cbd5e1;
             --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             --header-gradient: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+            --chart-bg: rgba(0, 0, 0, 0.05);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -57,7 +53,6 @@
             transition: all 0.3s ease;
         }
         
-        /* Header */
         .header {
             background: var(--header-gradient);
             border-bottom: 1px solid var(--border-color);
@@ -69,12 +64,6 @@
             top: 0;
             z-index: 100;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
         }
         
         .header h1 {
@@ -92,8 +81,7 @@
             gap: 12px;
         }
         
-        /* Theme Toggle */
-        .theme-toggle {
+        .theme-auto {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 24px;
@@ -102,14 +90,35 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s;
             font-size: 0.85rem;
+            transition: all 0.3s;
         }
         
-        .theme-toggle:hover {
-            background: var(--accent-blue);
-            color: white;
-            border-color: var(--accent-blue);
+        .theme-auto:hover { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border-radius: 20px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.connected { background: var(--accent-green); }
+        .status-dot.disconnected { background: var(--accent-red); animation: none; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
         .header-stats {
@@ -138,64 +147,12 @@
             letter-spacing: 0.5px;
         }
         
-        /* Quick Actions */
-        .quick-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        
-        .btn {
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .btn-primary {
-            background: var(--accent-blue);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
-        }
-        
-        .btn-success {
-            background: var(--accent-green);
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #059669;
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-        }
-        
-        .btn-outline:hover {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-        }
-        
-        /* Main Layout */
         .main-container {
             display: grid;
             grid-template-columns: 280px 1fr;
             min-height: calc(100vh - 70px);
         }
         
-        /* Sidebar */
         .sidebar {
             background: var(--bg-secondary);
             border-right: 1px solid var(--border-color);
@@ -206,9 +163,7 @@
             top: 70px;
         }
         
-        .sidebar-section {
-            margin-bottom: 24px;
-        }
+        .sidebar-section { margin-bottom: 24px; }
         
         .sidebar-title {
             font-size: 0.7rem;
@@ -226,10 +181,9 @@
             padding: 10px 14px;
             border-radius: 10px;
             color: var(--text-secondary);
-            text-decoration: none;
+            cursor: pointer;
             transition: all 0.2s;
             margin-bottom: 4px;
-            cursor: pointer;
         }
         
         .nav-item:hover, .nav-item.active {
@@ -237,112 +191,116 @@
             color: var(--text-primary);
         }
         
-        .nav-item .icon {
-            font-size: 1.2rem;
+        /* Charts Section */
+        .charts-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
         }
         
-        /* Commands Panel */
-        .command-list {
+        .chart-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .bar-chart {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
         }
         
-        .command-item {
-            background: var(--bg-card);
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-family: 'Consolas', 'Monaco', monospace;
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .bar-label {
             font-size: 0.75rem;
-            color: var(--accent-green);
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid transparent;
+            width: 80px;
+            color: var(--text-secondary);
         }
         
-        .command-item:hover {
-            background: var(--bg-column);
-            border-color: var(--accent-green);
+        .bar-container {
+            flex: 1;
+            height: 20px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            overflow: hidden;
         }
         
-        .command-desc {
+        .bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .bar-backlog { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+        .bar-progress { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+        .bar-done { background: linear-gradient(90deg, #10b981, #34d399); }
+        .bar-paused { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        
+        .bar-value {
+            font-size: 0.75rem;
+            font-weight: 600;
+            width: 30px;
+            text-align: right;
+        }
+        
+        /* Productivity Stats */
+        .productivity-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .prod-stat {
+            background: var(--bg-primary);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .prod-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+        
+        .prod-label {
             font-size: 0.65rem;
             color: var(--text-secondary);
             margin-top: 4px;
-            font-family: inherit;
         }
         
-        /* Reports Section */
-        .report-item {
+        /* Export Buttons */
+        .export-btn {
+            width: 100%;
+            padding: 10px;
             background: var(--bg-card);
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
             cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid transparent;
-        }
-        
-        .report-item:hover {
-            background: var(--bg-column);
-            border-color: var(--accent-blue);
-        }
-        
-        .report-title {
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .report-date {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-        }
-        
-        /* Activity Feed */
-        .activity-feed {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        
-        .activity-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.8rem;
-        }
-        
-        .activity-item:last-child {
-            border-bottom: none;
-        }
-        
-        .activity-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: var(--bg-column);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            gap: 8px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            margin-bottom: 8px;
         }
         
-        .activity-content {
-            flex: 1;
-        }
-        
-        .activity-text {
-            color: var(--text-primary);
-        }
-        
-        .activity-time {
-            font-size: 0.65rem;
-            color: var(--text-secondary);
+        .export-btn:hover {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
         }
         
         /* Kanban Board */
@@ -389,10 +347,6 @@
             gap: 10px;
         }
         
-        .column-icon {
-            font-size: 1.1rem;
-        }
-        
         .column-count {
             background: var(--bg-primary);
             padding: 3px 10px;
@@ -427,10 +381,9 @@
             flex: 1;
             overflow-y: auto;
             min-height: 150px;
-            max-height: calc(100vh - 250px);
+            max-height: calc(100vh - 350px);
         }
         
-        /* Cards */
         .card {
             background: var(--bg-card);
             border-radius: 12px;
@@ -479,14 +432,8 @@
             transition: all 0.2s;
         }
         
-        .card:hover .card-menu {
-            opacity: 1;
-        }
-        
-        .card-menu:hover {
-            background: var(--bg-column);
-            color: var(--accent-red);
-        }
+        .card:hover .card-menu { opacity: 1; }
+        .card-menu:hover { background: var(--bg-column); color: var(--accent-red); }
         
         .card-description {
             font-size: 0.8rem;
@@ -514,7 +461,6 @@
         .tag-yellow { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); }
         .tag-red { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
         .tag-purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
-        .tag-cyan { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
         
         .card-footer {
             display: flex;
@@ -566,11 +512,59 @@
             color: var(--text-secondary);
         }
         
-        /* Column Colors */
-        .column-backlog .column-title { color: var(--text-secondary); }
-        .column-progress .column-title { color: var(--accent-blue); }
-        .column-done .column-title { color: var(--accent-green); }
-        .column-paused .column-title { color: var(--accent-yellow); }
+        /* Comments Section */
+        .card-comments {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+            display: none;
+        }
+        
+        .card.open .card-comments { display: block; }
+        
+        .comment-input {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .comment-input input {
+            flex: 1;
+            padding: 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+        }
+        
+        .comment-input button {
+            padding: 8px 12px;
+            background: var(--accent-blue);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .comment-list {
+            max-height: 100px;
+            overflow-y: auto;
+            margin-top: 8px;
+        }
+        
+        .comment-item {
+            font-size: 0.75rem;
+            padding: 6px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+        
+        .comment-author {
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
         
         /* Modal */
         .modal-overlay {
@@ -689,6 +683,39 @@
             border-top: 1px solid var(--border-color);
         }
         
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+        }
+        
+        .btn-primary:hover { background: #2563eb; }
+        
+        .btn-danger {
+            background: var(--accent-red);
+            color: white;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .btn-outline:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+        
         /* Toast */
         .toast {
             position: fixed;
@@ -707,15 +734,12 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
         }
         
-        .toast.show {
-            transform: translateX(0);
-        }
-        
+        .toast.show { transform: translateX(0); }
         .toast.success { border-left: 4px solid var(--accent-green); }
         .toast.error { border-left: 4px solid var(--accent-red); }
         .toast.info { border-left: 4px solid var(--accent-blue); }
         
-        /* Search Bar */
+        /* Search & Filters */
         .search-bar {
             position: relative;
             margin-bottom: 16px;
@@ -739,7 +763,6 @@
             color: var(--text-secondary);
         }
         
-        /* Filters */
         .filters {
             display: flex;
             gap: 8px;
@@ -765,78 +788,29 @@
         
         /* Responsive */
         @media (max-width: 900px) {
-            .main-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .sidebar {
-                display: none;
-            }
-            
-            .kanban-column {
-                min-width: 280px;
-            }
-            
-            .header {
-                flex-wrap: wrap;
-                gap: 12px;
-            }
-            
-            .header-stats {
-                order: 3;
-                width: 100%;
-                justify-content: center;
-            }
+            .main-container { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+            .kanban-column { min-width: 280px; }
+            .header { flex-wrap: wrap; gap: 12px; }
+            .header-stats { order: 3; width: 100%; justify-content: center; }
         }
         
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: var(--bg-primary);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-secondary);
-        }
-        
-        /* Emoji reactions */
-        .card-reactions {
-            display: flex;
-            gap: 4px;
-            margin-top: 8px;
-        }
-        
-        .reaction {
-            font-size: 0.8rem;
-            padding: 2px 6px;
-            background: var(--bg-column);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .reaction:hover {
-            background: var(--accent-blue);
-        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
-        <div class="header-left">
-            <h1>📊 James Command Center</h1>
-        </div>
+        <h1>📊 James Command Center v2.5</h1>
         
         <div class="header-actions">
+            <div class="connection-status">
+                <span class="status-dot disconnected" id="statusDot"></span>
+                <span id="statusText">Conectando...</span>
+            </div>
+            
             <div class="header-stats">
                 <div class="stat-item">
                     <div class="stat-value" id="stat-total">0</div>
@@ -844,7 +818,7 @@
                 </div>
                 <div class="stat-item">
                     <div class="stat-value" id="stat-progress">0</div>
-                    <div class="stat-label">Em Andamento</div>
+                    <div class="stat-label">Andamento</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value" id="stat-done">0</div>
@@ -852,139 +826,103 @@
                 </div>
             </div>
             
-            <button class="theme-toggle" onclick="toggleTheme()">
-                <span id="theme-icon">🌙</span>
-                <span id="theme-text">Dark</span>
+            <button class="theme-auto" onclick="toggleTheme()">
+                <span id="theme-icon">🕐</span>
+                <span id="theme-text">Auto</span>
             </button>
             
-            <div class="quick-actions">
-                <button class="btn btn-primary" onclick="openModal('add')">
-                    ➕ Nova Task
-                </button>
-                <button class="btn btn-outline" onclick="refreshData()">
-                    🔄
-                </button>
-            </div>
+            <button class="btn btn-primary" onclick="openModal('add')">➕ Nova Task</button>
         </div>
     </header>
     
     <div class="main-container">
-        <!-- Sidebar -->
         <aside class="sidebar">
-            <!-- Navigation -->
             <div class="sidebar-section">
-                <div class="sidebar-title">🏠 Navegação</div>
-                <div class="nav-item active" onclick="showSection('kanban')">
-                    <span class="icon">📊</span>
-                    <span>Kanban Board</span>
+                <div class="sidebar-title">📊 Produtividade</div>
+                
+                <div class="charts-section">
+                    <div class="chart-title">📈 Distribuição por Status</div>
+                    <div class="bar-chart" id="statusChart">
+                        <div class="bar-row">
+                            <span class="bar-label">Backlog</span>
+                            <div class="bar-container"><div class="bar-fill bar-backlog" id="bar-backlog" style="width: 0%"></div></div>
+                            <span class="bar-value" id="val-backlog">0</span>
+                        </div>
+                        <div class="bar-row">
+                            <span class="bar-label">Andamento</span>
+                            <div class="bar-container"><div class="bar-fill bar-progress" id="bar-progress" style="width: 0%"></div></div>
+                            <span class="bar-value" id="val-progress">0</span>
+                        </div>
+                        <div class="bar-row">
+                            <span class="bar-label">Concluído</span>
+                            <div class="bar-container"><div class="bar-fill bar-done" id="bar-done" style="width: 0%"></div></div>
+                            <span class="bar-value" id="val-done">0</span>
+                        </div>
+                        <div class="bar-row">
+                            <span class="bar-label">Pausado</span>
+                            <div class="bar-container"><div class="bar-fill bar-paused" id="bar-paused" style="width: 0%"></div></div>
+                            <span class="bar-value" id="val-paused">0</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="nav-item" onclick="showSection('overview')">
-                    <span class="icon">📈</span>
-                    <span>Visão Geral</span>
-                </div>
-                <div class="nav-item" onclick="showSection('timeline')">
-                    <span class="icon">📅</span>
-                    <span>Timeline</span>
-                </div>
-                <div class="nav-item" onclick="openLink('https://btc-monitor-james.netlify.app')">
-                    <span class="icon">🎯</span>
-                    <span>BTC Monitor</span>
+                
+                <div class="productivity-grid">
+                    <div class="prod-stat">
+                        <div class="prod-value" id="prod-completed">0</div>
+                        <div class="prod-label">Feitas Hoje</div>
+                    </div>
+                    <div class="prod-stat">
+                        <div class="prod-value" id="prod-rate">0%</div>
+                        <div class="prod-label">Taxa Conclusão</div>
+                    </div>
+                    <div class="prod-stat">
+                        <div class="prod-value" id="prod-avg-time">0h</div>
+                        <div class="prod-label">Tempo Médio</div>
+                    </div>
+                    <div class="prod-stat">
+                        <div class="prod-value" id="prod-streak">0</div>
+                        <div class="prod-label">Dias Seguidos</div>
+                    </div>
                 </div>
             </div>
             
-            <!-- Quick Commands -->
             <div class="sidebar-section">
-                <div class="sidebar-title">⚡ Comandos Rápidos</div>
-                <div class="command-list">
-                    <div class="command-item" onclick="copyCommand('cd /home/ubuntu/btc-dashboard && git add . && git commit -m "Update" && git push')">
-                        📦 Deploy BTC
-                        <div class="command-desc">Commit + push BTC Dashboard</div>
-                    </div>
-                    <div class="command-item" onclick="copyCommand('cd /home/ubuntu && git pull && moltbot gateway restart')">
-                        🔄 Update Moltbot
-                        <div class="command-desc">Update + restart gateway</div>
-                    </div>
-                    <div class="command-item" onclick="copyCommand('cd /home/ubuntu/scripts && node login-system.js status')">
-                        🔐 Status Login
-                        <div class="command-desc">Verifica sessões ativas</div>
-                    </div>
-                    <div class="command-item" onclick="copyCommand('cd /home/ubuntu/project-dashboard && git add . && git commit -m "Update" && git push')">
-                        📋 Deploy Kanban
-                        <div class="command-desc">Commit + push Project</div>
-                    </div>
-                    <div class="command-item" onclick="copyCommand('cd /home/ubuntu && bash deploy-all.sh')">
-                        🚀 Deploy All
-                        <div class="command-desc">Deploy todos os sites</div>
-                    </div>
+                <div class="sidebar-title">📤 Exportar</div>
+                <button class="export-btn" onclick="exportCSV()">
+                    📄 Baixar CSV
+                </button>
+                <button class="export-btn" onclick="exportJSON()">
+                    📦 Baixar JSON
+                </button>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">⚡ Comandos</div>
+                <div class="command-item" onclick="copyCommand('qtask \"Nova task\" --col progress')">
+                    ➕ Nova Task
+                    <div class="command-desc">Adiciona task rápida</div>
+                </div>
+                <div class="command-item" onclick="copyCommand('cd /home/ubuntu && bash deploy-all.sh')">
+                    🚀 Deploy All
+                    <div class="command-desc">Deploy todos os sites</div>
                 </div>
             </div>
             
-            <!-- Recent Reports -->
             <div class="sidebar-section">
-                <div class="sidebar-title">📄 Relatórios</div>
-                <div class="report-item" onclick="openLink('https://btc-monitor-james.netlify.app')">
-                    <div class="report-title">📊 BTC Monitor</div>
-                    <div class="report-date">Game 72h - Status atual</div>
-                </div>
-                <div class="report-item">
-                    <div class="report-title">📈 Análise Diária</div>
-                    <div class="report-date">Crypto - 04/02 9h BRT</div>
-                </div>
-                <div class="report-item">
-                    <div class="report-title">🔧 Configurações</div>
-                    <div class="report-date">Sistema - Atualizado</div>
-                </div>
-            </div>
-            
-            <!-- Activity Feed -->
-            <div class="sidebar-section">
-                <div class="sidebar-title">📋 Atividades Recentes</div>
+                <div class="sidebar-title">📋 Atividades</div>
                 <div class="activity-feed" id="activity-feed">
                     <div class="activity-item">
-                        <div class="activity-icon">🚀</div>
-                        <div class="activity-content">
-                            <div class="activity-text">Deploy BTC Monitor</div>
+                        <div class="activity-icon">📊</div>
+                        <div>
+                            <div class="activity-text">Dashboard carregado</div>
                             <div class="activity-time">Agora</div>
                         </div>
                     </div>
-                    <div class="activity-item">
-                        <div class="activity-icon">📊</div>
-                        <div class="activity-content">
-                            <div class="activity-text">Kanban criado</div>
-                            <div class="activity-time">5 min atrás</div>
-                        </div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon">✅</div>
-                        <div class="activity-content">
-                            <div class="activity-text">Game BTC #1 encerrado</div>
-                            <div class="activity-time">2h atrás</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Links -->
-            <div class="sidebar-section">
-                <div class="sidebar-title">🔗 Links Úteis</div>
-                <div class="command-item" onclick="openLink('https://github.com/ellevenagent')">
-                    🐙 GitHub
-                </div>
-                <div class="command-item" onclick="openLink('https://app.netlify.com')">
-                    🌐 Netlify
-                </div>
-                <div class="command-item" onclick="openLink('https://app.telegram.com')">
-                    💬 Telegram
-                </div>
-                <div class="command-item" onclick="openLink('https://app.slack.com')">
-                    💼 Slack
                 </div>
             </div>
         </aside>
         
-        <!-- Kanban Board -->
         <main class="kanban-container">
-            <!-- Search & Filters -->
             <div class="search-bar">
                 <span class="search-icon">🔍</span>
                 <input type="text" class="search-input" id="searchInput" placeholder="Buscar tasks..." oninput="filterTasks()">
@@ -994,69 +932,44 @@
                 <span class="filter-chip active" onclick="filterBy('all')">Todas</span>
                 <span class="filter-chip" onclick="filterBy('high')">🔴 Alta Prioridade</span>
                 <span class="filter-chip" onclick="filterBy('medium')">🟡 Média</span>
-                <span class="filter-chip" onclick="filterBy('low')">🟢 Baixa</span>
                 <span class="filter-chip" onclick="filterBy('mine')">Minhas</span>
             </div>
             
             <div class="kanban-board">
-                <!-- Backlog -->
                 <div class="kanban-column column-backlog" data-column="backlog">
                     <div class="column-header">
-                        <div class="column-title">
-                            <span class="column-icon">📋</span>
-                            Backlog
-                            <span class="column-count" id="count-backlog">0</span>
-                        </div>
+                        <div class="column-title">📋 Backlog <span class="column-count" id="count-backlog">0</span></div>
                         <button class="column-add" onclick="openModal('add', 'backlog')">+</button>
                     </div>
-                    <div class="column-cards" id="backlog" ondrop="drop(event)" ondragover="allowDrop(event)">
-                    </div>
+                    <div class="column-cards" id="backlog" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 </div>
                 
-                <!-- Em Andamento -->
                 <div class="kanban-column column-progress" data-column="progress">
                     <div class="column-header">
-                        <div class="column-title">
-                            <span class="column-icon">🚀</span>
-                            Em Andamento
-                            <span class="column-count" id="count-progress">0</span>
-                        </div>
+                        <div class="column-title">🚀 Andamento <span class="column-count" id="count-progress">0</span></div>
                         <button class="column-add" onclick="openModal('add', 'progress')">+</button>
                     </div>
-                    <div class="column-cards" id="progress" ondrop="drop(event)" ondragover="allowDrop(event)">
-                    </div>
+                    <div class="column-cards" id="progress" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 </div>
                 
-                <!-- Concluído -->
                 <div class="kanban-column column-done" data-column="done">
                     <div class="column-header">
-                        <div class="column-title">
-                            <span class="column-icon">✅</span>
-                            Concluído
-                            <span class="column-count" id="count-done">0</span>
-                        </div>
+                        <div class="column-title">✅ Concluído <span class="column-count" id="count-done">0</span></div>
                     </div>
-                    <div class="column-cards" id="done" ondrop="drop(event)" ondragover="allowDrop(event)">
-                    </div>
+                    <div class="column-cards" id="done" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 </div>
                 
-                <!-- Pausado -->
                 <div class="kanban-column column-paused" data-column="paused">
                     <div class="column-header">
-                        <div class="column-title">
-                            <span class="column-icon">⏸️</span>
-                            Pausado
-                            <span class="column-count" id="count-paused">0</span>
-                        </div>
+                        <div class="column-title">⏸️ Pausado <span class="column-count" id="count-paused">0</span></div>
                     </div>
-                    <div class="column-cards" id="paused" ondrop="drop(event)" ondragover="allowDrop(event)">
-                    </div>
+                    <div class="column-cards" id="paused" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 </div>
             </div>
         </main>
     </div>
     
-    <!-- Add/Edit Modal -->
+    <!-- Modal -->
     <div class="modal-overlay" id="taskModal">
         <div class="modal">
             <div class="modal-header">
@@ -1074,7 +987,7 @@
                 
                 <div class="form-group">
                     <label class="form-label">Descrição</label>
-                    <textarea class="form-textarea" id="taskDesc" placeholder="Detalhes da task..."></textarea>
+                    <textarea class="form-textarea" id="taskDesc" placeholder="Detalhes..."></textarea>
                 </div>
                 
                 <div class="form-row">
@@ -1086,8 +999,6 @@
                             <option value="purple">🟣 Backend</option>
                             <option value="green">🟢 DevOps</option>
                             <option value="yellow">🟡 Crypto</option>
-                            <option value="cyan">🟣 UI/UX</option>
-                            <option value="red">🔴 Alta Prioridade</option>
                         </select>
                     </div>
                     
@@ -1118,15 +1029,24 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Emoji Reaction</label>
+                    <label class="form-label">Emoji</label>
                     <select class="form-select" id="taskEmoji">
                         <option value="">Sem emoji</option>
-                        <option value="🔥">🔥 Fire</option>
-                        <option value="💡">💡 Idea</option>
-                        <option value="⚡">⚡ Power</option>
-                        <option value="🎯">🎯 Target</option>
                         <option value="🚀">🚀 Rocket</option>
+                        <option value="💡">💡 Idea</option>
+                        <option value="🔥">🔥 Fire</option>
+                        <option value="🎯">🎯 Target</option>
+                        <option value="⚡">⚡ Power</option>
                     </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Comentários</label>
+                    <div class="comment-list" id="comments-list"></div>
+                    <div class="comment-input">
+                        <input type="text" id="newComment" placeholder="Adicionar comentário...">
+                        <button type="button" onclick="addComment()">➤</button>
+                    </div>
                 </div>
                 
                 <div class="modal-actions">
@@ -1144,105 +1064,33 @@
     </div>
     
     <script>
-        // Data Store
-        let tasks = JSON.parse(localStorage.getItem('kanban-tasks')) || [
-            {
-                id: 1,
-                title: 'Finalizar Deploy BTC Monitor',
-                description: 'Conectar Netlify e fazer deploy do painel de monitoramento BTC',
-                column: 'progress',
-                tag: 'purple',
-                assignee: 'Clawd',
-                priority: 'high',
-                emoji: '🚀',
-                dueDate: '2026-02-05',
-                createdAt: Date.now()
-            },
-            {
-                id: 2,
-                title: 'Configurar Notificações Email',
-                description: 'Terminar configuração do msmtp para alertas automáticos',
-                column: 'done',
-                tag: 'green',
-                assignee: 'Clawd',
-                priority: 'medium',
-                emoji: '✅',
-                createdAt: Date.now()
-            },
-            {
-                id: 3,
-                title: 'Melhorar Dashboard BTC',
-                description: 'Adicionar gráficos em tempo real com WebSocket',
-                column: 'backlog',
-                tag: 'blue',
-                assignee: 'James',
-                priority: 'medium',
-                emoji: '📊',
-                createdAt: Date.now()
-            },
-            {
-                id: 4,
-                title: 'Sistema Multi-Agentes BTC',
-                description: 'Implementar ciclo completo de 5 agentes para análise',
-                column: 'done',
-                tag: 'yellow',
-                assignee: 'Auto',
-                priority: 'high',
-                emoji: '🤖',
-                createdAt: Date.now()
-            },
-            {
-                id: 5,
-                title: 'Backup Automático de Memória',
-                description: 'Script para backup diário das memórias do sistema',
-                column: 'backlog',
-                tag: 'purple',
-                assignee: 'Clawd',
-                priority: 'low',
-                emoji: '💾',
-                createdAt: Date.now()
-            },
-            {
-                id: 6,
-                title: 'Integrar API de Preços Live',
-                description: 'Conectar com OKX/CoinGecko para preços em tempo real',
-                column: 'progress',
-                tag: 'yellow',
-                assignee: 'Clawd',
-                priority: 'high',
-                emoji: '💰',
-                dueDate: '2026-02-06',
-                createdAt: Date.now()
-            }
-        ];
+        // Auto Dark/Light Mode
+        function initTheme() {
+            const hour = new Date().getHours();
+            const autoTheme = hour >= 6 && hour < 18 ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', autoTheme);
+            document.getElementById('theme-text').textContent = autoTheme === 'light' ? '☀️' : '🌙';
+        }
         
-        let draggedCard = null;
-        let currentFilter = 'all';
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            loadTheme();
-            renderTasks();
-            updateStats();
-        });
-        
-        // Theme Toggle
         function toggleTheme() {
             const current = document.documentElement.getAttribute('data-theme') || 'dark';
             const newTheme = current === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('kanban-theme', newTheme);
-            
-            document.getElementById('theme-icon').textContent = newTheme === 'light' ? '☀️' : '🌙';
-            document.getElementById('theme-text').textContent = newTheme === 'light' ? 'Light' : 'Dark';
+            document.getElementById('theme-text').textContent = newTheme === 'light' ? '☀️' : '🌙';
         }
         
-        function loadTheme() {
-            const theme = localStorage.getItem('kanban-theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', theme);
-            document.getElementById('theme-icon').textContent = theme === 'light' ? '☀️' : '🌙';
-            document.getElementById('theme-text').textContent = theme === 'light' ? 'Light' : 'Dark';
-        }
+        // Data Store
+        let tasks = JSON.parse(localStorage.getItem('kanban-tasks')) || [];
+        let draggedCard = null;
+        let currentFilter = 'all';
+        let comments = JSON.parse(localStorage.getItem('kanban-comments')) || {};
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            renderTasks();
+            updateStats();
+            updateCharts();
+        });
         
         // Render Tasks
         function renderTasks() {
@@ -1251,38 +1099,27 @@
             
             columns.forEach(col => {
                 const container = document.getElementById(col);
-                const originalHTML = container.innerHTML;
                 container.innerHTML = '';
                 
                 let tasksInCol = tasks.filter(t => t.column === col);
                 
-                // Apply filters
                 if (currentFilter !== 'all') {
-                    if (currentFilter === 'mine') {
-                        tasksInCol = tasksInCol.filter(t => t.assignee === 'James');
-                    } else {
-                        tasksInCol = tasksInCol.filter(t => t.priority === currentFilter);
-                    }
+                    tasksInCol = currentFilter === 'mine' 
+                        ? tasksInCol.filter(t => t.assignee === 'James')
+                        : tasksInCol.filter(t => t.priority === currentFilter);
                 }
                 
-                // Apply search
                 if (searchTerm) {
                     tasksInCol = tasksInCol.filter(t => 
                         t.title.toLowerCase().includes(searchTerm) || 
-                        t.description.toLowerCase().includes(searchTerm)
-                    );
+                        t.description.toLowerCase().includes(searchTerm));
                 }
                 
                 document.getElementById(`count-${col}`).textContent = tasksInCol.length;
-                
-                tasksInCol.forEach(task => {
-                    const card = createCard(task);
-                    container.appendChild(card);
-                });
+                tasksInCol.forEach(task => container.appendChild(createCard(task)));
             });
         }
         
-        // Create Card Element
         function createCard(task) {
             const card = document.createElement('div');
             card.className = 'card';
@@ -1292,90 +1129,91 @@
             card.ondragend = () => endDrag();
             card.onclick = () => openModal('edit', task.column, task.id);
             
-            const tagClasses = {
-                'blue': 'tag-blue',
-                'green': 'tag-green',
-                'yellow': 'tag-yellow',
-                'red': 'tag-red',
-                'purple': 'tag-purple',
-                'cyan': 'tag-cyan'
-            };
+            const tagClasses = {blue: 'tag-blue', green: 'tag-green', yellow: 'tag-yellow', red: 'tag-red', purple: 'tag-purple'};
+            const priorityLabels = {high: '🔴 Alta', medium: '🟡 Média', low: '🟢 Baixa'};
             
-            const tagLabels = {
-                'blue': '🔵 Frontend',
-                'green': '🟢 Backend',
-                'purple': '🟣 Backend',
-                'yellow': '🟡 Crypto',
-                'cyan': '🟣 UI/UX',
-                'red': '🔴 Alta Prioridade'
-            };
-            
-            const priorityLabels = {
-                'high': '🔴 Alta',
-                'medium': '🟡 Média',
-                'low': '🟢 Baixa'
-            };
-            
-            let cardHTML = `
+            card.innerHTML = `
                 <div class="card-header">
                     <div class="card-title">${task.emoji || ''} ${task.title}</div>
                     <button class="card-menu" onclick="event.stopPropagation(); deleteTask(${task.id})">🗑️</button>
                 </div>
-            `;
-            
-            if (task.description) {
-                cardHTML += `<div class="card-description">${task.description}</div>`;
-            }
-            
-            if (task.tag) {
-                cardHTML += `<div class="card-tags"><span class="tag ${tagClasses[task.tag]}">${tagLabels[task.tag]}</span></div>`;
-            }
-            
-            cardHTML += `
+                ${task.description ? `<div class="card-description">${task.description}</div>` : ''}
+                ${task.tag ? `<div class="card-tags"><span class="tag ${tagClasses[task.tag]}">${task.tag}</span></div>` : ''}
                 <div class="card-footer">
-                    <div class="card-assignee">
-                        <div class="avatar">${task.assignee.charAt(0)}</div>
-                        <span>${task.assignee}</span>
-                    </div>
+                    <div class="card-assignee"><div class="avatar">${task.assignee?.charAt(0) || '?'}</div><span>${task.assignee || '?'}</span></div>
                     <div class="card-meta">
                         <span class="card-priority priority-${task.priority}">${priorityLabels[task.priority]}</span>
-                        ${task.dueDate ? `<span class="card-date">📅 ${formatDate(task.dueDate)}</span>` : ''}
+                        ${task.dueDate ? `<span class="card-date">📅 ${new Date(task.dueDate).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}</span>` : ''}
                     </div>
                 </div>
             `;
-            
-            if (task.emoji) {
-                cardHTML += `<div class="card-reactions">${getEmojiReactions(task.emoji)}</div>`;
-            }
-            
-            card.innerHTML = cardHTML;
             return card;
         }
         
-        function getEmojiReactions(emoji) {
-            const reactions = ['🔥', '👍', '👀', '🎯', '🚀'];
-            return reactions.map(r => `<span class="reaction" onclick="addReaction(event, '${r}')">${r}</span>`).join('');
+        // Charts & Stats
+        function updateStats() {
+            document.getElementById('stat-total').textContent = tasks.length;
+            document.getElementById('stat-progress').textContent = tasks.filter(t => t.column === 'progress').length;
+            document.getElementById('stat-done').textContent = tasks.filter(t => t.column === 'done').length;
         }
         
-        function formatDate(dateStr) {
-            if (!dateStr) return '';
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        function updateCharts() {
+            const total = tasks.length || 1;
+            const counts = {
+                backlog: tasks.filter(t => t.column === 'backlog').length,
+                progress: tasks.filter(t => t.column === 'progress').length,
+                done: tasks.filter(t => t.column === 'done').length,
+                paused: tasks.filter(t => t.column === 'paused').length
+            };
+            
+            Object.keys(counts).forEach(col => {
+                const pct = (counts[col] / total) * 100;
+                document.getElementById(`bar-${col}`).style.width = `${pct}%`;
+                document.getElementById(`val-${col}`).textContent = counts[col];
+            });
+            
+            // Productivity metrics
+            const doneToday = tasks.filter(t => t.column === 'done' && t.completedToday).length;
+            document.getElementById('prod-completed').textContent = doneToday;
+            document.getElementById('prod-rate').textContent = total ? Math.round((counts.done / total) * 100) + '%' : '0%';
+        }
+        
+        // Export Functions
+        function exportCSV() {
+            let csv = 'ID,Título,Descrição,Coluna,Tag,Responsável,Prioridade,Data Limite,Criado\n';
+            tasks.forEach(t => {
+                csv += `"${t.id}","${t.title}","${t.description || ''}","${t.column}","${t.tag || ''}","${t.assignee || ''}","${t.priority}","${t.dueDate || ''}","${new Date(t.createdAt).toLocaleDateString()}"\n`;
+            });
+            download(csv, 'kanban-tasks.csv', 'text/csv');
+            showToast('CSV exportado!', 'success');
+        }
+        
+        function exportJSON() {
+            const json = JSON.stringify(tasks, null, 2);
+            download(json, 'kanban-tasks.json', 'application/json');
+            showToast('JSON exportado!', 'success');
+        }
+        
+        function download(content, filename, type) {
+            const blob = new Blob([content], {type});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
         }
         
         // Drag & Drop
         function drag(e) {
             draggedCard = e.target;
             e.target.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
         }
         
         function allowDrop(e) {
             e.preventDefault();
             const column = e.target.closest('.kanban-column');
-            if (column) {
-                column.classList.add('drag-over');
-            }
+            if (column) column.classList.add('drag-over');
         }
         
         function endDrag() {
@@ -1383,36 +1221,34 @@
             document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over'));
         }
         
-        function drop(e) {
+        async function drop(e) {
             e.preventDefault();
             const column = e.target.closest('.column-cards');
             if (!column || !draggedCard) return;
             
-            column.closest('.kanban-column').classList.remove('drag-over');
             const columnId = column.id;
             const taskId = parseInt(draggedCard.dataset.id);
-            
             const task = tasks.find(t => t.id === taskId);
+            
             if (task) {
                 task.column = columnId;
+                if (columnId === 'done' && !task.completedToday) {
+                    task.completedToday = true;
+                }
                 localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
                 renderTasks();
                 updateStats();
-                addActivity('Task movida para ' + getColumnName(columnId));
-                showToast('Task movida para ' + getColumnName(columnId), 'success');
+                updateCharts();
+                addActivity(`Task movida para ${getColumnName(columnId)}`);
+                showToast('Task movida!', 'success');
             }
         }
         
         function getColumnName(col) {
-            return {
-                'backlog': 'Backlog',
-                'progress': 'Em Andamento',
-                'done': 'Concluído',
-                'paused': 'Pausado'
-            }[col] || col;
+            return {backlog: 'Backlog', progress: 'Andamento', done: 'Concluído', paused: 'Pausado'}[col] || col;
         }
         
-        // Modal Functions
+        // Modal
         function openModal(type, column = 'backlog', id = null) {
             const modal = document.getElementById('taskModal');
             const deleteBtn = document.getElementById('deleteBtn');
@@ -1429,6 +1265,8 @@
                 document.getElementById('taskDueDate').value = '';
                 document.getElementById('taskEmoji').value = '';
                 deleteBtn.style.display = 'none';
+                document.getElementById('comments-list').innerHTML = '';
+                document.getElementById('newComment').value = '';
             } else {
                 const task = tasks.find(t => t.id === id);
                 document.getElementById('modalTitle').textContent = '✏️ Editar Task';
@@ -1437,13 +1275,13 @@
                 document.getElementById('taskTitle').value = task.title;
                 document.getElementById('taskDesc').value = task.description || '';
                 document.getElementById('taskTag').value = task.tag || '';
-                document.getElementById('taskAssignee').value = task.assignee;
+                document.getElementById('taskAssignee').value = task.assignee || 'James';
                 document.getElementById('taskPriority').value = task.priority;
                 document.getElementById('taskDueDate').value = task.dueDate || '';
                 document.getElementById('taskEmoji').value = task.emoji || '';
                 deleteBtn.style.display = 'block';
+                renderComments(id);
             }
-            
             modal.classList.add('active');
         }
         
@@ -1453,7 +1291,6 @@
         
         function saveTask(e) {
             e.preventDefault();
-            
             const id = document.getElementById('taskId').value;
             const taskData = {
                 title: document.getElementById('taskTitle').value,
@@ -1467,18 +1304,11 @@
             };
             
             if (id) {
-                const index = tasks.findIndex(t => t.id === parseInt(id));
-                if (index !== -1) {
-                    tasks[index] = { ...tasks[index], ...taskData };
-                }
+                const idx = tasks.findIndex(t => t.id === parseInt(id));
+                if (idx !== -1) tasks[idx] = { ...tasks[idx], ...taskData };
                 showToast('Task atualizada!', 'success');
             } else {
-                const newTask = {
-                    id: Date.now(),
-                    ...taskData,
-                    createdAt: Date.now()
-                };
-                tasks.push(newTask);
+                tasks.push({ id: Date.now(), ...taskData, createdAt: Date.now() });
                 addActivity('Nova task: ' + taskData.title);
                 showToast('Task criada!', 'success');
             }
@@ -1486,21 +1316,46 @@
             localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
             renderTasks();
             updateStats();
+            updateCharts();
             closeModal();
         }
         
         function deleteTask() {
             const id = document.getElementById('taskId').value;
-            if (id && confirm('Tem certeza que deseja excluir esta task?')) {
-                const task = tasks.find(t => t.id === parseInt(id));
+            if (id && confirm('Excluir esta task?')) {
                 tasks = tasks.filter(t => t.id !== parseInt(id));
                 localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
                 renderTasks();
                 updateStats();
+                updateCharts();
                 closeModal();
-                addActivity('Task excluída: ' + (task ? task.title : ''));
                 showToast('Task excluída', 'error');
             }
+        }
+        
+        // Comments
+        function renderComments(taskId) {
+            const list = document.getElementById('comments-list');
+            const taskComments = comments[taskId] || [];
+            list.innerHTML = taskComments.map(c => `
+                <div class="comment-item">
+                    <span class="comment-author">${c.author}:</span> ${c.text}
+                </div>
+            `).join('');
+        }
+        
+        function addComment() {
+            const taskId = document.getElementById('taskId').value;
+            const input = document.getElementById('newComment');
+            const text = input.value.trim();
+            if (!text || !taskId) return;
+            
+            if (!comments[taskId]) comments[taskId] = [];
+            comments[taskId].push({ author: 'James', text, date: Date.now() });
+            localStorage.setItem('kanban-comments', JSON.stringify(comments));
+            renderComments(taskId);
+            input.value = '';
+            showToast('Comentário adicionado!', 'success');
         }
         
         // Filters
@@ -1515,76 +1370,35 @@
             renderTasks();
         }
         
-        // Stats
-        function updateStats() {
-            document.getElementById('stat-total').textContent = tasks.length;
-            document.getElementById('stat-progress').textContent = tasks.filter(t => t.column === 'progress').length;
-            document.getElementById('stat-done').textContent = tasks.filter(t => t.column === 'done').length;
-        }
-        
-        // Activity Feed
+        // Utils
         function addActivity(text) {
             const feed = document.getElementById('activity-feed');
             const item = document.createElement('div');
             item.className = 'activity-item';
             item.innerHTML = `
                 <div class="activity-icon">📝</div>
-                <div class="activity-content">
-                    <div class="activity-text">${text}</div>
-                    <div class="activity-time">Agora</div>
-                </div>
+                <div><div class="activity-text">${text}</div><div class="activity-time">Agora</div></div>
             `;
             feed.insertBefore(item, feed.firstChild);
-            
-            // Keep only last 10
-            while (feed.children.length > 10) {
-                feed.removeChild(feed.lastChild);
-            }
+            while (feed.children.length > 10) feed.removeChild(feed.lastChild);
         }
         
-        // Utility Functions
         function copyCommand(cmd) {
-            navigator.clipboard.writeText(cmd).then(() => {
-                showToast('Comando copiado!', 'success');
-            });
-        }
-        
-        function openLink(url) {
-            window.open(url, '_blank');
-        }
-        
-        function refreshData() {
-            renderTasks();
-            updateStats();
-            showToast('Dados atualizados!', 'info');
+            navigator.clipboard.writeText(cmd).then(() => showToast('Comando copiado!', 'success'));
         }
         
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
-            const msg = document.getElementById('toastMessage');
-            msg.textContent = message;
+            document.getElementById('toastMessage').textContent = message;
             toast.className = 'toast ' + type;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
         
-        function showSection(section) {
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            event.target.classList.add('active');
-            showToast('Navegando para ' + section, 'info');
-        }
-        
-        function addReaction(event, emoji) {
-            event.stopPropagation();
-            showToast('Reaction: ' + emoji, 'success');
-        }
-        
-        // Close modal on escape
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeModal();
         });
         
-        // Close modal on overlay click
         document.getElementById('taskModal').addEventListener('click', (e) => {
             if (e.target.id === 'taskModal') closeModal();
         });
