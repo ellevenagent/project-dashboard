@@ -914,7 +914,7 @@
                     📋 Listar Tasks
                     <div class="command-desc">Mostra todas as tasks</div>
                 </div>
-                <div class="command-item" onclick="copyCommand('node /home/ubuntu/scripts/seed-kanban.js')">
+                <div class="command-item" onclick="seedTasks()">
                     🔄 Sync Kanban
                     <div class="command-desc">Sincroniza tasks com DB</div>
                 </div>
@@ -1105,8 +1105,43 @@
         let currentFilter = 'all';
         let comments = JSON.parse(localStorage.getItem('kanban-comments')) || {};
         
+        // Seed Tasks Function - Creates initial tasks
+        function seedTasks() {
+            const seedData = [
+                // Backlog
+                { id: Date.now() + 1, title: "Implementar Webhooks/Telegram Notifications", description: "Adicionar notificações automáticas via webhook", column: "backlog", tag: "purple", assignee: "James", priority: "medium", emoji: "🔗", createdAt: Date.now() },
+                { id: Date.now() + 2, title: "Melhorar Comandos do Menu", description: "Completar seção de comandos rápidos", column: "backlog", tag: "blue", assignee: "Clawd", priority: "high", emoji: "⚡", createdAt: Date.now() },
+                // Progress
+                { id: Date.now() + 3, title: "Monitorar BTC Trading Game", description: "Acompanhar ciclo de 72h, próxima entrada ~$69K-$70K", column: "progress", tag: "yellow", assignee: "Clawd", priority: "high", emoji: "📊", createdAt: Date.now() },
+                { id: Date.now() + 4, title: "Manter Daily Crypto Reports", description: "Relatórios diários às 9h BRT para grupo Doninhas", column: "progress", tag: "yellow", assignee: "Clawd", priority: "high", emoji: "📈", createdAt: Date.now() },
+                // Done
+                { id: Date.now() + 5, title: "Project Dashboard v2.5", description: "Gráficos, export CSV/JSON, comentários, dark mode auto", column: "done", tag: "green", assignee: "Clawd", priority: "high", emoji: "🎯", createdAt: Date.now() }
+            ];
+            
+            // Add seed tasks if empty
+            if (tasks.length === 0) {
+                tasks = seedData;
+                localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
+                addActivity('Tasks baseadas carregadas');
+                showToast('Tasks inicializadas!', 'success');
+            } else {
+                showToast('Tasks já existem: ' + tasks.length, 'info');
+            }
+            
+            renderTasks();
+            updateStats();
+            updateCharts();
+        }
+        
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
+            // Set connection status
+            document.getElementById('statusDot').className = 'status-dot connected';
+            document.getElementById('statusText').textContent = 'Conectado';
+            // Auto-seed if empty
+            if (tasks.length === 0) {
+                setTimeout(seedTasks, 500);
+            }
             renderTasks();
             updateStats();
             updateCharts();
