@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 James Command Center - Project Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #0f0f23;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-column: #1f1f3a;
+            --text-primary: #e4e4e7;
+            --text-secondary: #a1a1aa;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --border-color: #2d2d4a;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header-stats {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-success {
+            background: var(--accent-green);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--accent-yellow);
+            color: #1a1a2e;
+        }
+        
+        .btn-danger {
+            background: var(--accent-red);
+            color: white;
+        }
+        
+        /* Main Layout */
+        .main-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: calc(100vh - 80px);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+        
+        .sidebar-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        
+        .nav-item .icon {
+            font-size: 1.2rem;
+        }
+        
+        /* Commands Panel */
+        .command-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .command-item {
+            background: var(--bg-card);
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-green);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .command-item:hover {
+            background: var(--bg-column);
+        }
+        
+        .command-desc {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-family: inherit;
+        }
+        
+        /* Reports Section */
+        .report-item {
+            background: var(--bg-card);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .report-item:hover {
+            background: var(--bg-column);
+        }
+        
+        .report-title {
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+        
+        .report-date {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Kanban Board */
+        .kanban-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+        
+        .kanban-board {
+            display: flex;
+            gap: 20px;
+            min-width: max-content;
+        }
+        
+        .kanban-column {
+            background: var(--bg-column);
+            border-radius: 12px;
+            min-width: 300px;
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .column-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .column-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .column-count {
+            background: var(--bg-primary);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .column-add {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .column-add:hover {
+            background: var(--bg-primary);
+            color: var(--accent-blue);
+        }
+        
+        .column-cards {
+            padding: 12px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 200px;
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            cursor: grab;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+        
+        .card.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        
+        .card.drag-over {
+            border-color: var(--accent-green);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        
+        .card-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .card-menu {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 2px;
+            border-radius: 4px;
+        }
+        
+        .card-menu:hover {
+            background: var(--bg-primary);
+        }
+        
+        .card-description {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        
+        .tag {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        
+        .tag-blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .tag-green { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .tag-yellow { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .tag-red { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .tag-purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .card-assignee {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: bold;
+        }
+        
+        .card-priority {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .priority-high { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .priority-medium { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .priority-low { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 500px;
+            transform: translateY(-20px);
+            transition: all 0.3s;
+        }
+        
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+        
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        /* Column Colors */
+        .column-backlog .column-title { color: var(--text-secondary); }
+        .column-progress .column-title { color: var(--accent-blue); }
+        .column-done .column-title { color: var(--accent-green); }
+        .column-paused .column-title { color: var(--accent-yellow); }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(120%);
+            transition: all 0.3s;
+            z-index: 1001;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success { border-left: 3px solid var(--accent-green); }
+        .toast.error { border-left: 3px solid var(--accent-red); }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .kanban-column {
+                min-width: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>📊 James Command Center</h1>
+        <div class="header-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-progress">0</div>
+                <div class="stat-label">Em Andamento</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-done">0</div>
+                <div class="stat-label">Concluído</div>
+            </div>
+        </div>
+        <div class="quick-actions">
+            <button class="btn btn-primary" onclick="openModal('add')">
+                ➕ Nova Task
+            </button>
+            <button class="btn btn-success" onclick="refreshData()">
+                🔄 Atualizar
+            </button>
+        </div>
+    </header>
+    
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">🏠 Navegação</div>
+                <a href="#" class="nav-item active">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="icon">🎯</span>
+                    <span>BTC Monitor</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="icon">📁</span>
+                    <span>Arquivos</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="icon">⚙️</span>
+                    <span>Configurações</span>
+                </a>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">⚡ Comandos Rápidos</div>
+                <div class="command-list">
+                    <div class="command-item" onclick="copyCommand('cd /home/ubuntu/btc-dashboard && bash deploy-token.sh')">
+                        📦 Deploy Dashboard BTC
+                        <div class="command-desc">Faz push e deploy no Netlify</div>
+                    </div>
+                    <div class="command-item" onclick="copyCommand('cd /home/ubuntu && git pull && moltbot gateway restart')">
+                        🔄 Update Moltbot
+                        <div class="command-desc">Atualiza e reinicia o gateway</div>
+                    </div>
+                    <div class="command-item" onclick="copyCommand('cd /home/ubuntu/clawd && bash memory-backup.sh')">
+                        💾 Backup Memória
+                        <div class="command-desc">Salva backup das memórias</div>
+                    </div>
+                    <div class="command-item" onclick="copyCommand('cd /home/ubuntu/scripts && node login-system.js status')">
+                        🔐 Status Login
+                        <div class="command-desc">Verifica sessões ativas</div>
+                    </div>
+                    <div class="command-item" onclick="copyCommand('cd /home/ubuntu/btc-dashboard && node server.js')">
+                        🖥️ Start Dashboard
+                        <div class="command-desc">Inicia servidor local</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">📄 Relatórios</div>
+                <div class="report-item">
+                    <div class="report-title">📊 Game BTC 72h</div>
+                    <div class="report-date">Última atualização: 04:00 UTC</div>
+                </div>
+                <div class="report-item">
+                    <div class="report-title">📈 Análise Diária Crypto</div>
+                    <div class="report-date">Enviado: 03/02 9h BRT</div>
+                </div>
+                <div class="report-item">
+                    <div class="report-title">🔧 Configurações Sistema</div>
+                    <div class="report-date">Atualizado: 03/02</div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">🔗 Links Úteis</div>
+                <div class="command-item" onclick="openLink('https://github.com/ellevenagent')">
+                    🐙 GitHub
+                </div>
+                <div class="command-item" onclick="openLink('https://app.netlify.com')">
+                    🌐 Netlify
+                </div>
+                <div class="command-item" onclick="openLink('https://app.telegram.com')">
+                    💬 Telegram
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Kanban Board -->
+        <main class="kanban-container">
+            <div class="kanban-board">
+                <!-- Backlog -->
+                <div class="kanban-column column-backlog" data-column="backlog">
+                    <div class="column-header">
+                        <div class="column-title">
+                            📋 Backlog
+                            <span class="column-count" id="count-backlog">0</span>
+                        </div>
+                        <button class="column-add" onclick="openModal('add', 'backlog')">+</button>
+                    </div>
+                    <div class="column-cards" id="backlog" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    </div>
+                </div>
+                
+                <!-- Em Andamento -->
+                <div class="kanban-column column-progress" data-column="progress">
+                    <div class="column-header">
+                        <div class="column-title">
+                            🚀 Em Andamento
+                            <span class="column-count" id="count-progress">0</span>
+                        </div>
+                        <button class="column-add" onclick="openModal('add', 'progress')">+</button>
+                    </div>
+                    <div class="column-cards" id="progress" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    </div>
+                </div>
+                
+                <!-- Concluído -->
+                <div class="kanban-column column-done" data-column="done">
+                    <div class="column-header">
+                        <div class="column-title">
+                            ✅ Concluído
+                            <span class="column-count" id="count-done">0</span>
+                        </div>
+                    </div>
+                    <div class="column-cards" id="done" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    </div>
+                </div>
+                
+                <!-- Pausado -->
+                <div class="kanban-column column-paused" data-column="paused">
+                    <div class="column-header">
+                        <div class="column-title">
+                            ⏸️ Pausado
+                            <span class="column-count" id="count-paused">0</span>
+                        </div>
+                    </div>
+                    <div class="column-cards" id="paused" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="taskModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Nova Task</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="taskForm" onsubmit="saveTask(event)">
+                <input type="hidden" id="taskId">
+                <input type="hidden" id="taskColumn">
+                
+                <div class="form-group">
+                    <label class="form-label">Título</label>
+                    <input type="text" class="form-input" id="taskTitle" required placeholder="Nome da task">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Descrição</label>
+                    <textarea class="form-textarea" id="taskDesc" placeholder="Detalhes da task"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Tags</label>
+                    <select class="form-select" id="taskTag">
+                        <option value="">Sem tag</option>
+                        <option value="blue">🔵 Frontend</option>
+                        <option value="green">🟢 Backend</option>
+                        <option value="purple">🟣 DevOps</option>
+                        <option value="yellow">🟡 Crypto</option>
+                        <option value="red">🔴 Alta Prioridade</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Responsável</label>
+                    <select class="form-select" id="taskAssignee">
+                        <option value="James">James</option>
+                        <option value="Clawd">Clawd</option>
+                        <option value="Auto">🤖 Auto</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Prioridade</label>
+                    <select class="form-select" id="taskPriority">
+                        <option value="low">🟢 Baixa</option>
+                        <option value="medium" selected>🟡 Média</option>
+                        <option value="high">🔴 Alta</option>
+                    </select>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-danger" onclick="deleteTask()" id="deleteBtn" style="display: none;">Excluir</button>
+                    <button type="button" class="btn" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+    </div>
+    
+    <script>
+        // Data Store
+        let tasks = JSON.parse(localStorage.getItem('kanban-tasks')) || [
+            {
+                id: 1,
+                title: 'Finalizar Deploy Dashboard BTC',
+                description: 'Conectar Netlify e fazer deploy do painel',
+                column: 'progress',
+                tag: 'purple',
+                assignee: 'Clawd',
+                priority: 'high',
+                createdAt: Date.now()
+            },
+            {
+                id: 2,
+                title: 'Configurar Notificações Email',
+                description: 'Terminar configuração do msmtp para alertas',
+                column: 'done',
+                tag: 'green',
+                assignee: 'Clawd',
+                priority: 'medium',
+                createdAt: Date.now()
+            },
+            {
+                id: 3,
+                title: 'Sistema Multi-Agentes BTC',
+                description: 'Implementar ciclo completo de 5 agentes',
+                column: 'done',
+                tag: 'yellow',
+                assignee: 'Auto',
+                priority: 'high',
+                createdAt: Date.now()
+            },
+            {
+                id: 4,
+                title: 'Melhorar Dashboard BTC',
+                description: 'Adicionar gráficos em tempo real',
+                column: 'backlog',
+                tag: 'blue',
+                assignee: 'James',
+                priority: 'medium',
+                createdAt: Date.now()
+            },
+            {
+                id: 5,
+                title: 'Backup Automático de Memória',
+                description: 'Script para backup diário das memórias',
+                column: 'backlog',
+                tag: 'purple',
+                assignee: 'Clawd',
+                priority: 'low',
+                createdAt: Date.now()
+            }
+        ];
+        
+        let draggedCard = null;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTasks();
+            updateStats();
+        });
+        
+        // Render Tasks
+        function renderTasks() {
+            const columns = ['backlog', 'progress', 'done', 'paused'];
+            columns.forEach(col => {
+                const container = document.getElementById(col);
+                container.innerHTML = '';
+                const tasksInCol = tasks.filter(t => t.column === col);
+                document.getElementById(`count-${col}`).textContent = tasksInCol.length;
+                tasksInCol.forEach(task => {
+                    const card = createCard(task);
+                    container.appendChild(card);
+                });
+            });
+        }
+        
+        // Create Card Element
+        function createCard(task) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.draggable = true;
+            card.dataset.id = task.id;
+            card.ondragstart = (e) => drag(e);
+            card.ondragend = () => endDrag();
+            card.onclick = () => openModal('edit', task.column, task.id);
+            
+            const tagClass = task.tag ? `tag-${task.tag}` : '';
+            const tagText = {
+                'blue': '🔵 Frontend',
+                'green': '🟢 Backend',
+                'purple': '🟣 DevOps',
+                'yellow': '🟡 Crypto',
+                'red': '🔴 Alta Prioridade'
+            }[task.tag] || '';
+            
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="card-title">${task.title}</div>
+                </div>
+                <div class="card-description">${task.description || ''}</div>
+                ${task.tag ? `<div class="card-tags"><span class="tag ${tagClass}">${tagText}</span></div>` : ''}
+                <div class="card-footer">
+                    <div class="card-assignee">
+                        <div class="avatar">${task.assignee.charAt(0)}</div>
+                        <span>${task.assignee}</span>
+                    </div>
+                    <span class="card-priority priority-${task.priority}">${task.priority === 'high' ? '🔴 Alta' : task.priority === 'medium' ? '🟡 Média' : '🟢 Baixa'}</span>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        // Drag & Drop
+        function drag(e) {
+            draggedCard = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+        
+        function allowDrop(e) {
+            e.preventDefault();
+            const column = e.target.closest('.column-cards');
+            if (column) {
+                column.classList.add('drag-over');
+            }
+        }
+        
+        function endDrag() {
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('dragging'));
+            document.querySelectorAll('.column-cards').forEach(c => c.classList.remove('drag-over'));
+        }
+        
+        function drop(e) {
+            e.preventDefault();
+            const column = e.target.closest('.column-cards');
+            if (!column || !draggedCard) return;
+            
+            const columnId = column.id;
+            const taskId = parseInt(draggedCard.dataset.id);
+            
+            // Update task column
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.column = columnId;
+                localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
+                renderTasks();
+                updateStats();
+                showToast('Task movida para ' + getColumnName(columnId), 'success');
+            }
+        }
+        
+        function getColumnName(col) {
+            return {
+                'backlog': 'Backlog',
+                'progress': 'Em Andamento',
+                'done': 'Concluído',
+                'paused': 'Pausado'
+            }[col] || col;
+        }
+        
+        // Modal Functions
+        function openModal(type, column = 'backlog', id = null) {
+            const modal = document.getElementById('taskModal');
+            const form = document.getElementById('taskForm');
+            const deleteBtn = document.getElementById('deleteBtn');
+            
+            if (type === 'add') {
+                document.getElementById('modalTitle').textContent = 'Nova Task';
+                document.getElementById('taskId').value = '';
+                document.getElementById('taskColumn').value = column;
+                document.getElementById('taskTitle').value = '';
+                document.getElementById('taskDesc').value = '';
+                document.getElementById('taskTag').value = '';
+                document.getElementById('taskAssignee').value = 'James';
+                document.getElementById('taskPriority').value = 'medium';
+                deleteBtn.style.display = 'none';
+            } else {
+                const task = tasks.find(t => t.id === id);
+                document.getElementById('modalTitle').textContent = 'Editar Task';
+                document.getElementById('taskId').value = id;
+                document.getElementById('taskColumn').value = task.column;
+                document.getElementById('taskTitle').value = task.title;
+                document.getElementById('taskDesc').value = task.description || '';
+                document.getElementById('taskTag').value = task.tag || '';
+                document.getElementById('taskAssignee').value = task.assignee;
+                document.getElementById('taskPriority').value = task.priority;
+                deleteBtn.style.display = 'block';
+            }
+            
+            modal.classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('taskModal').classList.remove('active');
+        }
+        
+        function saveTask(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('taskId').value;
+            const taskData = {
+                title: document.getElementById('taskTitle').value,
+                description: document.getElementById('taskDesc').value,
+                column: document.getElementById('taskColumn').value,
+                tag: document.getElementById('taskTag').value,
+                assignee: document.getElementById('taskAssignee').value,
+                priority: document.getElementById('taskPriority').value
+            };
+            
+            if (id) {
+                // Edit existing
+                const index = tasks.findIndex(t => t.id === parseInt(id));
+                if (index !== -1) {
+                    tasks[index] = { ...tasks[index], ...taskData };
+                }
+                showToast('Task atualizada!', 'success');
+            } else {
+                // Add new
+                const newTask = {
+                    id: Date.now(),
+                    ...taskData,
+                    createdAt: Date.now()
+                };
+                tasks.push(newTask);
+                showToast('Task criada!', 'success');
+            }
+            
+            localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
+            renderTasks();
+            updateStats();
+            closeModal();
+        }
+        
+        function deleteTask() {
+            const id = document.getElementById('taskId').value;
+            if (id && confirm('Tem certeza que deseja excluir esta task?')) {
+                tasks = tasks.filter(t => t.id !== parseInt(id));
+                localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
+                renderTasks();
+                updateStats();
+                closeModal();
+                showToast('Task excluída', 'error');
+            }
+        }
+        
+        // Stats
+        function updateStats() {
+            document.getElementById('stat-total').textContent = tasks.length;
+            document.getElementById('stat-progress').textContent = tasks.filter(t => t.column === 'progress').length;
+            document.getElementById('stat-done').textContent = tasks.filter(t => t.column === 'done').length;
+        }
+        
+        // Utility Functions
+        function copyCommand(cmd) {
+            navigator.clipboard.writeText(cmd).then(() => {
+                showToast('Comando copiado!', 'success');
+            });
+        }
+        
+        function openLink(url) {
+            window.open(url, '_blank');
+        }
+        
+        function refreshData() {
+            renderTasks();
+            updateStats();
+            showToast('Dados atualizados!', 'success');
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMessage');
+            msg.textContent = message;
+            toast.className = 'toast ' + type;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        // Close modal on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+        
+        // Close modal on overlay click
+        document.getElementById('taskModal').addEventListener('click', (e) => {
+            if (e.target.id === 'taskModal') closeModal();
+        });
+    </script>
+</body>
+</html>
