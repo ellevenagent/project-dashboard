@@ -897,14 +897,34 @@
             </div>
             
             <div class="sidebar-section">
-                <div class="sidebar-title">⚡ Comandos</div>
-                <div class="command-item" onclick="copyCommand('qtask \"Nova task\" --col progress')">
+                <div class="sidebar-title">⚡ Comandos Rápidos</div>
+                <div class="command-item" onclick="copyCommand('qtask \"Nova task\" --col progress --tag blue')">
                     ➕ Nova Task
-                    <div class="command-desc">Adiciona task rápida</div>
+                    <div class="command-desc">Task rápida via CLI</div>
                 </div>
-                <div class="command-item" onclick="copyCommand('cd /home/ubuntu && bash deploy-all.sh')">
+                <div class="command-item" onclick="copyCommand('bash /home/ubuntu/deploy-all.sh')">
                     🚀 Deploy All
                     <div class="command-desc">Deploy todos os sites</div>
+                </div>
+                <div class="command-item" onclick="copyCommand('bash /home/ubuntu/scripts/send-daily-report-v2.sh')">
+                    📊 Relatório Crypto
+                    <div class="command-desc">Envia análise diária Doninhas</div>
+                </div>
+                <div class="command-item" onclick="copyCommand('bash /home/ubuntu/scripts/kanban-cli.js list')">
+                    📋 Listar Tasks
+                    <div class="command-desc">Mostra todas as tasks</div>
+                </div>
+                <div class="command-item" onclick="copyCommand('node /home/ubuntu/scripts/seed-kanban.js')">
+                    🔄 Sync Kanban
+                    <div class="command-desc">Sincroniza tasks com DB</div>
+                </div>
+                <div class="command-item" onclick="copyCommand('moltbot gateway restart')">
+                    🔁 Restart Bot
+                    <div class="command-desc">Reinicia o Moltbot</div>
+                </div>
+                <div class="command-item" onclick="copyCommand('crontab -l | grep moltbot')">
+                    ⏰ Ver Cron Jobs
+                    <div class="command-desc">Lista agendamentos</div>
                 </div>
             </div>
             
