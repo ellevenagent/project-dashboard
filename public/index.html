@@ -1346,20 +1346,10 @@
                 
                 return data.success;
             } catch (e) {
-                console.warn('API save failed, using localStorage');
-                useApi = false;
-                // Fallback to localStorage
-                let tasks = JSON.parse(localStorage.getItem('kanban-tasks')) || [];
-                if (action === 'update') {
-                    const idx = tasks.findIndex(t => t.id === task.id);
-                    if (idx !== -1) tasks[idx] = { ...tasks[idx], ...task, updatedAt: Date.now() };
-                } else if (action === 'add') {
-                    tasks.push({ ...task, id: Date.now(), createdAt: Date.now(), updatedAt: Date.now() });
-                } else if (action === 'delete') {
-                    tasks = tasks.filter(t => t.id !== task.id);
-                }
-                localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
-                return true;
+                console.error('API save failed:', e.message);
+                // Don't fallback - show error
+                showToast('Erro ao salvar: ' + e.message, 'error');
+                return false;
             }
         }
         
