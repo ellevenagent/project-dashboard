@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 
 /**
- * Kanban Server with PostgreSQL + Real-Time Updates
+ * Kanban Server with PostgreSQL + Real-Time WebSocket (Socket.io)
  * Fornece API para o dashboard em tempo real com persistência
  */
 
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+
+// Socket.io for real-time updates
+const { Server } = require('socket.io');
 
 // PostgreSQL configuration
 const { Client } = require('pg');
@@ -16,6 +19,12 @@ const PORT = process.env.PORT || 3001;
 
 // PostgreSQL client ( Railway provides DATABASE_URL)
 let pgClient = null;
+
+// Socket.io instance
+let io = null;
+
+// Connected clients
+const clients = new Set();
 
 async function initDatabase() {
     try {
@@ -127,6 +136,15 @@ async function deleteTaskPG(taskId) {
     }
 }
 
+// Broadcast to all connected clients
+function broadcastTasks() {
+    if (io && usePostgres) {
+        getTasksPG().then(tasks => {
+            io.emit('tasks:update', { tasks, timestamp: Date.now() });
+        });
+    }
+}
+
 // Local file fallback
 const TASKS_FILE = path.join(__dirname, '..', 'tasks.json');
 
@@ -138,44 +156,7 @@ function getTasksLocal() {
     } catch (e) {
         console.log('Usando tasks em memória');
     }
-    return [
-        {
-            id: 1,
-            title: 'Finalizar Deploy BTC Monitor',
-            description: 'Conectar Netlify e fazer deploy do painel de monitoramento BTC',
-            column: 'progress',
-            tag: 'purple',
-            assignee: 'Clawd',
-            priority: 'high',
-            emoji: '🚀',
-            dueDate: '2026-02-05',
-            updatedAt: Date.now()
-        },
-        {
-            id: 2,
-            title: 'Configurar PostgreSQL',
-            description: 'Integrar banco de dados Railway para persistência real',
-            column: 'progress',
-            tag: 'blue',
-            assignee: 'Clawd',
-            priority: 'high',
-            emoji: '🗄️',
-            dueDate: '2026-02-10',
-            updatedAt: Date.now()
-        },
-        {
-            id: 3,
-            title: 'Configurar Notificações Email',
-            description: 'Terminar configuração do msmtp para alertas automáticos',
-            column: 'done',
-            tag: 'green',
-            assignee: 'Clawd',
-            priority: 'medium',
-            emoji: '✅',
-            dueDate: '2026-02-05',
-            updatedAt: Date.now()
-        }
-    ];
+    return [];
 }
 
 function saveTasksLocal(tasks) {
@@ -190,15 +171,21 @@ const MIME_TYPES = {
     '.html': 'text/html',
     '.css': 'text/css',
     '.js': 'application/javascript',
-    '.json': 'application/json'
+    '.json': 'application/json',
+    '.ico': 'image/x-icon'
 };
 
-// HTTP Server
+// HTTP Server with Socket.io
 const server = http.createServer(async (req, res) => {
     // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // Handle Socket.io CORS
+    if (req.url.startsWith('/socket.io')) {
+        return;
+    }
     
     // API endpoints
     if (req.url === '/api/tasks' && req.method === 'GET') {
@@ -225,6 +212,7 @@ const server = http.createServer(async (req, res) => {
                 if (data.action === 'update' && data.task) {
                     if (usePostgres) {
                         success = await saveTaskPG({ ...data.task, updatedAt: Date.now() });
+                        if (success) broadcastTasks();
                     } else {
                         let tasks = getTasksLocal();
                         const idx = tasks.findIndex(t => t.id === data.task.id);
@@ -237,6 +225,7 @@ const server = http.createServer(async (req, res) => {
                 } else if (data.action === 'add' && data.task) {
                     if (usePostgres) {
                         success = await saveTaskPG({ ...data.task, createdAt: Date.now(), updatedAt: Date.now() });
+                        if (success) broadcastTasks();
                     } else {
                         let tasks = getTasksLocal();
                         const newTask = { 
@@ -252,6 +241,7 @@ const server = http.createServer(async (req, res) => {
                 } else if (data.action === 'delete' && data.taskId) {
                     if (usePostgres) {
                         success = await deleteTaskPG(data.taskId);
+                        if (success) broadcastTasks();
                     } else {
                         let tasks = getTasksLocal();
                         tasks = tasks.filter(t => t.id !== data.taskId);
@@ -283,6 +273,7 @@ const server = http.createServer(async (req, res) => {
             status: 'running',
             timestamp: Date.now(),
             source: usePostgres ? 'postgresql' : 'local',
+            clients: clients.size,
             total: tasks.length,
             byColumn: {
                 backlog: tasks.filter(t => t.column === 'backlog').length,
@@ -299,6 +290,8 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ 
             status: 'ok', 
             postgres: usePostgres,
+            websocket: !!io,
+            clients: clients.size,
             timestamp: Date.now() 
         }));
         return;
@@ -322,10 +315,66 @@ const server = http.createServer(async (req, res) => {
     });
 });
 
+// Initialize Socket.io
+function initWebSocket() {
+    io = new Server(server, {
+        cors: {
+            origin: '*',
+            methods: ['GET', 'POST']
+        },
+        path: '/socket.io'
+    });
+    
+    io.on('connection', (socket) => {
+        console.log(`🔌 Client connected: ${socket.id}`);
+        clients.add(socket.id);
+        
+        // Send current tasks on connection
+        if (usePostgres) {
+            getTasksPG().then(tasks => {
+                socket.emit('tasks:update', { tasks, timestamp: Date.now() });
+            });
+        }
+        
+        // Handle disconnect
+        socket.on('disconnect', () => {
+            console.log(`🔌 Client disconnected: ${socket.id}`);
+            clients.delete(socket.id);
+        });
+        
+        // Handle task updates from clients
+        socket.on('task:update', async (data) => {
+            if (usePostgres && data.task) {
+                await saveTaskPG({ ...data.task, updatedAt: Date.now() });
+                broadcastTasks();
+            }
+        });
+        
+        socket.on('task:add', async (data) => {
+            if (usePostgres && data.task) {
+                await saveTaskPG({ ...data.task, createdAt: Date.now(), updatedAt: Date.now() });
+                broadcastTasks();
+            }
+        });
+        
+        socket.on('task:delete', async (data) => {
+            if (usePostgres && data.taskId) {
+                await deleteTaskPG(data.taskId);
+                broadcastTasks();
+            }
+        });
+    });
+    
+    console.log('✅ WebSocket (Socket.io) inicializado');
+}
+
 // Initialize and start server
 async function start() {
     // Try PostgreSQL first
     usePostgres = await initDatabase();
+    
+    // Initialize WebSocket
+    initWebSocket();
     
     server.listen(PORT, () => {
         console.log(`
@@ -335,6 +384,8 @@ async function start() {
 📊 API: http://localhost:${PORT}/api/tasks
 📈 Status: http://localhost:${PORT}/api/status
 💚 Health: http://localhost:${PORT}/api/health
+🔌 WebSocket: ws://localhost:${PORT}/socket.io
+👥 Clients: ${clients.size} connected
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         `);
     });

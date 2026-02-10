@@ -1,14 +1,15 @@
 {
   "name": "project-dashboard",
   "version": "1.0.0",
-  "description": "Kanban Dashboard with PostgreSQL",
+  "description": "Kanban Dashboard with PostgreSQL + Real-time WebSocket",
   "main": "realtime-server.js",
   "scripts": {
     "start": "node realtime-server.js",
     "dev": "node realtime-server.js"
   },
   "dependencies": {
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "socket.io": "^4.7.2"
   },
   "engines": {
     "node": ">=18.0.0"

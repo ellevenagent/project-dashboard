@@ -1087,11 +1087,71 @@
         <span id="toastMessage"></span>
     </div>
     
+    <script src="/socket.io/socket.io.js"></script>
     <script>
         // API Configuration
         const API_BASE = window.location.origin;
         let useApi = true;
         let apiSource = 'unknown';
+        let socket = null;
+        let socketConnected = false;
+        
+        // WebSocket connection
+        function initWebSocket() {
+            try {
+                socket = io({
+                    path: '/socket.io',
+                    reconnection: true,
+                    reconnectionDelay: 1000,
+                    reconnectionAttempts: Infinity
+                });
+                
+                socket.on('connect', () => {
+                    console.log('🔌 WebSocket connected');
+                    socketConnected = true;
+                    updateConnectionStatus();
+                    addActivity('Tempo real conectado');
+                });
+                
+                socket.on('disconnect', () => {
+                    console.log('🔌 WebSocket disconnected');
+                    socketConnected = false;
+                    updateConnectionStatus();
+                });
+                
+                socket.on('tasks:update', (data) => {
+                    console.log('📡 Received tasks update via WebSocket');
+                    tasks = data.tasks || [];
+                    renderTasks();
+                    updateStats();
+                    updateCharts();
+                    showToast('Atualizado em tempo real!', 'success');
+                });
+                
+                socket.on('connect_error', (err) => {
+                    console.warn('WebSocket connection error:', err.message);
+                });
+                
+            } catch (e) {
+                console.warn('WebSocket not available:', e.message);
+            }
+        }
+        
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('statusDot');
+            const textEl = document.getElementById('statusText');
+            
+            if (useApi && socketConnected) {
+                statusEl.className = 'status-dot connected';
+                textEl.textContent = '🟢 Realtime';
+            } else if (useApi) {
+                statusEl.className = 'status-dot connected';
+                textEl.textContent = apiSource === 'postgresql' ? 'PostgreSQL' : 'API';
+            } else {
+                statusEl.className = 'status-dot disconnected';
+                textEl.textContent = 'Local';
+            }
+        }
         
         // API Functions
         async function fetchTasks() {
@@ -1115,6 +1175,12 @@
                     body: JSON.stringify({ action, task })
                 });
                 const data = await response.json();
+                
+                // Also emit via WebSocket if connected
+                if (socketConnected && action === 'update') {
+                    socket.emit('task:update', { task });
+                }
+                
                 return data.success;
             } catch (e) {
                 console.warn('API save failed, using localStorage');
@@ -1142,6 +1208,12 @@
                     body: JSON.stringify({ action: 'delete', taskId })
                 });
                 const data = await response.json();
+                
+                // Also emit via WebSocket if connected
+                if (socketConnected) {
+                    socket.emit('task:delete', { taskId });
+                }
+                
                 return data.success;
             } catch (e) {
                 useApi = false;
@@ -1178,13 +1250,7 @@
             tasks = await fetchTasks();
             
             // Update connection status
-            if (useApi) {
-                const statusEl = document.getElementById('statusDot');
-                const textEl = document.getElementById('statusText');
-                statusEl.className = 'status-dot connected';
-                textEl.textContent = apiSource === 'postgresql' ? 'PostgreSQL' : 'API';
-                addActivity(`Conectado: ${apiSource}`);
-            }
+            updateConnectionStatus();
             
             // Seed if empty
             if (tasks.length === 0) {
@@ -1201,9 +1267,9 @@
             const seedData = [
                 { title: "Integrar PostgreSQL", description: "Banco de dados Railway para persistência real", column: "done", tag: "green", assignee: "Clawd", priority: "high", emoji: "🗄️", createdAt: Date.now() },
                 { title: "Deploy Railway", description: "Subir dashboard na Railway com Node.js", column: "done", tag: "blue", assignee: "James", priority: "high", emoji: "🚂", createdAt: Date.now() },
+                { title: "WebSocket Realtime", description: "Atualizações em tempo real via Socket.io", column: "progress", tag: "purple", assignee: "Clawd", priority: "high", emoji: "⚡", createdAt: Date.now() },
                 { title: "BTC Trading Bot", description: "Monitorar e executar trades automaticamente", column: "progress", tag: "yellow", assignee: "Clawd", priority: "high", emoji: "📊", createdAt: Date.now() },
-                { title: "Daily Crypto Reports", description: "Relatórios diários às 9h BRT", column: "progress", tag: "yellow", assignee: "Clawd", priority: "high", emoji: "📈", createdAt: Date.now() },
-                { title: "Melhorar Frontend", description: "Conectar frontend à API PostgreSQL", column: "backlog", tag: "purple", assignee: "Clawd", priority: "high", emoji: "⚡", createdAt: Date.now() }
+                { title: "Daily Crypto Reports", description: "Relatórios diários às 9h BRT", column: "progress", tag: "yellow", assignee: "Clawd", priority: "high", emoji: "📈", createdAt: Date.now() }
             ];
             
             for (const task of seedData) {
@@ -1229,6 +1295,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             initData();
+            initWebSocket();
         });
         
         // Render Tasks
