@@ -233,6 +233,50 @@
             color: rgba(255, 255, 255, 0.85);
         }
         
+        /* Development Status Indicator */
+        .dev-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .dev-status.idle {
+            background: rgba(107, 114, 128, 0.2);
+            color: var(--text-secondary);
+        }
+        
+        .dev-status.working {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-blue);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .dev-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        
+        .dev-status.idle .dot {
+            background: #6b7280;
+        }
+        
+        .dev-status.working .dot {
+            background: var(--accent-blue);
+            box-shadow: 0 0 10px var(--accent-blue);
+        }
+        
         /* Charts Section */
         .charts-section {
             background: var(--bg-card);
@@ -848,6 +892,11 @@
         <h1>📊 Project Dashboard v3.0</h1>
         
         <div class="header-actions">
+            <div class="dev-status idle" id="devStatus" title="Status de desenvolvimento do Clawd">
+                <span class="dot"></span>
+                <span id="devStatusText">Ocioso</span>
+            </div>
+            
             <button class="theme-auto" onclick="refreshTasks()" title="Atualizar tasks">
                 🔄
             </button>
@@ -1194,6 +1243,44 @@
                 textEl.textContent = 'Local';
             }
         }
+        
+        // Development Status Functions
+        function setDevStatus(status, message) {
+            const statusEl = document.getElementById('devStatus');
+            const textEl = document.getElementById('devStatusText');
+            
+            statusEl.className = `dev-status ${status}`;
+            textEl.textContent = message;
+            
+            // Broadcast via WebSocket
+            if (socketConnected) {
+                socket.emit('dev:status', { status, message, timestamp: Date.now() });
+            }
+        }
+        
+        function setWorking(message = 'Desenvolvendo...') {
+            setDevStatus('working', message);
+            addActivity(`🔴 ${message}`);
+        }
+        
+        function setIdle() {
+            setDevStatus('idle', 'Ocioso');
+        }
+        
+        // Listen for dev status updates from other clients
+        socket.on('dev:status', (data) => {
+            const statusEl = document.getElementById('devStatus');
+            const textEl = document.getElementById('devStatusText');
+            statusEl.className = `dev-status ${data.status}`;
+            textEl.textContent = data.message;
+        });
+        
+        // Listen for activity broadcasts
+        socket.on('activity:broadcast', (data) => {
+            if (data.clientId !== socket.id) {
+                addActivity(data.message);
+            }
+        });
         
         // API Functions
         async function fetchTasks() {

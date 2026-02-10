@@ -363,6 +363,26 @@ function initWebSocket() {
                 broadcastTasks();
             }
         });
+        
+        // Handle development status updates
+        socket.on('dev:status', (data) => {
+            // Broadcast dev status to all clients
+            io.emit('dev:status', {
+                ...data,
+                clientId: socket.id,
+                timestamp: Date.now()
+            });
+            console.log(`📡 Dev status: ${data.status} - ${data.message}`);
+        });
+        
+        // Handle activity broadcasts
+        socket.on('activity:broadcast', (data) => {
+            io.emit('activity:broadcast', {
+                ...data,
+                clientId: socket.id,
+                timestamp: Date.now()
+            });
+        });
     });
     
     console.log('✅ WebSocket (Socket.io) inicializado');
