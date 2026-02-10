@@ -95,9 +95,14 @@ async function getTasksPG() {
 
 async function saveTaskPG(task) {
     try {
+        if (!pgClient) {
+            console.error('pgClient is null');
+            return false;
+        }
+        
         if (task.id && task.id > 0) {
             // Update existing
-            await pgClient.query(`
+            const result = await pgClient.query(`
                 UPDATE tasks SET 
                     title = $1, description = $2, column_name = $3, tag = $4,
                     assignee = $5, priority = $6, emoji = $7, due_date = $8,
@@ -108,6 +113,8 @@ async function saveTaskPG(task) {
                 task.assignee, task.priority, task.emoji, task.dueDate,
                 task.updatedAt || Date.now(), task.id
             ]);
+            console.log(`Updated task ${task.id}: ${result.rowCount} rows affected`);
+            return result.rowCount > 0;
         } else {
             // Insert new
             await pgClient.query(`
@@ -125,8 +132,8 @@ async function saveTaskPG(task) {
                 const newTask = { ...task, id: Date.now() };
                 broadcastClawdNotification(newTask);
             }
+            return true;
         }
-        return true;
     } catch (e) {
         console.error('Erro saveTask:', e.message);
         return false;
