@@ -214,6 +214,9 @@ function broadcastActivity(message) {
     }
 }
 
+// Comments storage (in-memory for now)
+const comments = {};
+
 // Local file fallback
 const TASKS_FILE = path.join(__dirname, '..', 'tasks.json');
 
@@ -369,6 +372,47 @@ const server = http.createServer(async (req, res) => {
             clients: clients.size,
             timestamp: Date.now() 
         }));
+        return;
+    }
+    
+    // Comments API
+    if (req.url === '/api/comments' && req.method === 'GET') {
+        const taskId = new URL(req.url, 'http://localhost').searchParams.get('taskId');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            comments: comments[taskId] || [],
+            timestamp: Date.now()
+        }));
+        return;
+    }
+    
+    if (req.url === '/api/comments' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const data = JSON.parse(body);
+                const taskId = String(data.taskId);
+                if (!comments[taskId]) comments[taskId] = [];
+                
+                const newComment = {
+                    author: data.author || 'Clawd',
+                    text: data.text,
+                    timestamp: Date.now()
+                };
+                comments[taskId].push(newComment);
+                
+                // Broadcast new comment
+                if (io) {
+                    io.emit('comment:new', { taskId, comment: newComment });
+                }
+                
+                res.end(JSON.stringify({ success: true, comment: newComment }));
+            } catch (e) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: e.message }));
+            }
+        });
         return;
     }
     
