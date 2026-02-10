@@ -840,6 +840,275 @@
             }
         }
         
+        /* Mobile Responsive - Trello Pattern */
+        @media (max-width: 768px) {
+            :root {
+                --card-padding: 12px;
+                --column-padding: 8px;
+            }
+            
+            body {
+                font-size: 14px;
+                padding-bottom: 70px; /* Space for bottom nav */
+            }
+            
+            .main-container {
+                padding: 8px;
+                gap: 8px;
+            }
+            
+            .header {
+                padding: 8px 12px;
+                flex-wrap: wrap;
+            }
+            
+            .header h1 {
+                font-size: 1.1rem;
+            }
+            
+            .header-actions {
+                gap: 6px;
+            }
+            
+            .btn {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+            
+            .kanban-board {
+                display: flex;
+                gap: 8px;
+                overflow-x: auto;
+                padding: 8px;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .kanban-column {
+                min-width: 280px;
+                max-width: 280px;
+                scroll-snap-align: start;
+                border-radius: 8px;
+            }
+            
+            .column-header {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            
+            .column-cards {
+                padding: 8px;
+                min-height: 100px;
+                max-height: calc(100vh - 300px);
+            }
+            
+            .card {
+                padding: 10px;
+                margin-bottom: 6px;
+                border-radius: 6px;
+            }
+            
+            .card-title {
+                font-size: 0.9rem;
+            }
+            
+            .card-meta {
+                font-size: 0.75rem;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            
+            .card-actions {
+                opacity: 1;
+                position: absolute;
+                right: 8px;
+                top: 8px;
+                background: var(--bg-column);
+                border-radius: 4px;
+                padding: 2px;
+            }
+            
+            .card:hover .card-actions {
+                opacity: 1;
+            }
+            
+            .card-menu {
+                width: 24px;
+                height: 24px;
+                font-size: 1rem;
+            }
+            
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                bottom: 0;
+                width: 280px;
+                z-index: 1000;
+                transition: left 0.3s ease;
+                overflow-y: auto;
+            }
+            
+            .sidebar.open {
+                left: 0;
+            }
+            
+            .sidebar-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s;
+            }
+            
+            .sidebar-overlay.open {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            
+            /* Mobile Navigation */
+            .mobile-nav {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: var(--bg-secondary);
+                border-top: 1px solid var(--border-color);
+                padding: 8px;
+                gap: 4px;
+                z-index: 100;
+                justify-content: space-around;
+            }
+            
+            .mobile-nav-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 4px 12px;
+                color: var(--text-secondary);
+                text-decoration: none;
+                font-size: 0.7rem;
+                border-radius: 6px;
+                transition: all 0.2s;
+            }
+            
+            .mobile-nav-item.active {
+                color: var(--accent-blue);
+                background: var(--bg-card);
+            }
+            
+            .mobile-nav-item span:first-child {
+                font-size: 1.4rem;
+                margin-bottom: 2px;
+            }
+            
+            /* Filter Chips */
+            .filter-chips {
+                display: flex;
+                gap: 6px;
+                overflow-x: auto;
+                padding: 4px 0;
+                scrollbar-width: none;
+            }
+            
+            .filter-chips::-webkit-scrollbar {
+                display: none;
+            }
+            
+            .filter-chip {
+                padding: 4px 10px;
+                font-size: 0.75rem;
+                border-radius: 12px;
+                white-space: nowrap;
+            }
+            
+            /* Modal Mobile */
+            .modal {
+                margin: 16px;
+                max-height: calc(100vh - 32px);
+                overflow-y: auto;
+            }
+            
+            .form-input,
+            .form-textarea,
+            .form-select {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+            
+            /* Toast */
+            .toast {
+                left: 16px;
+                right: 16px;
+                bottom: 80px;
+                max-width: none;
+            }
+            
+            /* Drag and Drop Visual Feedback */
+            .kanban-column.drag-over {
+                background: var(--bg-card);
+            }
+            
+            .card.dragging {
+                opacity: 0.5;
+                transform: rotate(2deg);
+            }
+            
+            /* Search Bar */
+            .search-bar {
+                margin-bottom: 8px;
+            }
+            
+            .search-input {
+                padding: 10px 16px 10px 40px;
+                font-size: 0.9rem;
+            }
+            
+            /* Stats */
+            .stats-row {
+                gap: 8px;
+            }
+            
+            .stat-card {
+                padding: 8px 12px;
+            }
+            
+            .stat-value {
+                font-size: 1.2rem;
+            }
+            
+            .stat-label {
+                font-size: 0.7rem;
+            }
+        }
+        
+        /* Small Mobile */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1rem;
+            }
+            
+            .kanban-column {
+                min-width: 260px;
+                max-width: 260px;
+            }
+            
+            .card {
+                padding: 8px;
+            }
+            
+            .card-title {
+                font-size: 0.85rem;
+            }
+            
+            .btn {
+                padding: 5px 8px;
+                font-size: 0.75rem;
+            }
+        }
+        
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -871,6 +1140,9 @@
 <body>
     <!-- Header -->
     <header class="header">
+        <button class="btn btn-outline" onclick="toggleSidebar()" id="sidebarToggle" style="display:none;">
+            ☰
+        </button>
         <h1>📊 James Command Center</h1>
         
         <div class="header-actions">
@@ -1109,6 +1381,26 @@
         <span id="toastMessage"></span>
     </div>
     
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav">
+        <a href="#" class="mobile-nav-item active" onclick="filterBy('all'); return false;">
+            <span>📋</span>
+            <span>Todas</span>
+        </a>
+        <a href="#" class="mobile-nav-item" onclick="filterBy('progress'); return false;">
+            <span>🚀</span>
+            <span>Andamento</span>
+        </a>
+        <a href="#" class="mobile-nav-item" onclick="filterBy('done'); return false;">
+            <span>✅</span>
+            <span>Concluídas</span>
+        </a>
+        <a href="#" class="mobile-nav-item" onclick="openNewTaskModal(); return false;">
+            <span>➕</span>
+            <span>Nova</span>
+        </a>
+    </nav>
+    
     <!-- Delete Confirmation Modal -->
     <div class="modal-overlay" id="deleteConfirmModal">
         <div class="confirm-modal">
@@ -1140,7 +1432,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadTheme();
             connect();
+            initMobileUI();
             setInterval(fetchTasks, 2000); // Poll every 2 seconds
+            window.addEventListener('resize', initMobileUI);
         });
         
         // Real-time connection
@@ -1459,6 +1753,16 @@
             currentFilter = filter;
             document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
             event.target.classList.add('active');
+            
+            // Update mobile nav
+            document.querySelectorAll('.mobile-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const mobileItems = document.querySelectorAll('.mobile-nav-item');
+            if (filter === 'all') mobileItems[0].classList.add('active');
+            if (filter === 'progress') mobileItems[1].classList.add('active');
+            if (filter === 'done') mobileItems[2].classList.add('active');
+            
             renderTasks();
         }
         
@@ -1504,6 +1808,24 @@
             document.documentElement.setAttribute('data-theme', theme);
             document.getElementById('theme-icon').textContent = theme === 'light' ? '☀️' : '🌙';
             document.getElementById('theme-text').textContent = theme === 'light' ? 'Light' : 'Dark';
+        }
+        
+        // Sidebar Toggle (Mobile)
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+        
+        // Show hamburger menu on mobile
+        function initMobileUI() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            if (window.innerWidth <= 768) {
+                sidebarToggle.style.display = 'flex';
+            } else {
+                sidebarToggle.style.display = 'none';
+            }
         }
         
         // Utils
