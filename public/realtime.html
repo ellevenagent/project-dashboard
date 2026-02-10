@@ -705,6 +705,70 @@
         .toast.error { border-left: 4px solid var(--accent-red); }
         .toast.info { border-left: 4px solid var(--accent-blue); }
         
+        .toast.success { border-left: 4px solid var(--accent-green); }
+        .toast.error { border-left: 4px solid var(--accent-red); }
+        .toast.info { border-left: 4px solid var(--accent-blue); }
+        
+        /* Delete Confirmation Modal */
+        .confirm-modal {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        
+        .confirm-modal .confirm-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+        
+        .confirm-modal .confirm-title {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .confirm-modal .confirm-text {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+        
+        .confirm-modal .confirm-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .confirm-modal .btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .confirm-modal .btn-cancel {
+            background: var(--bg-column);
+            color: var(--text-primary);
+        }
+        
+        .confirm-modal .btn-cancel:hover {
+            background: var(--border-color);
+        }
+        
+        .confirm-modal .btn-confirm {
+            background: var(--accent-red);
+            color: white;
+        }
+        
+        .confirm-modal .btn-confirm:hover {
+            filter: brightness(1.1);
+        }
+        
         .search-bar {
             position: relative;
             margin-bottom: 16px;
@@ -1045,9 +1109,28 @@
         <span id="toastMessage"></span>
     </div>
     
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteConfirmModal">
+        <div class="confirm-modal">
+            <div class="confirm-icon">🗑️</div>
+            <h3 class="confirm-title">Excluir Task?</h3>
+            <p class="confirm-text">Tem certeza que deseja excluir "<span id="deleteConfirmTitle"></span>"? Esta ação não pode ser desfeita.</p>
+            <div class="confirm-actions">
+                <button class="btn btn-cancel" onclick="closeDeleteConfirm()">Cancelar</button>
+                <button class="btn btn-confirm" onclick="confirmDelete()">Excluir</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
-        // API URL - tries local first, then falls back to demo data
-        const API_URL = localStorage.getItem('kanban-api') || 'http://localhost:3001/api/tasks';
+        // API URL - production detection
+        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        const PRODUCTION_API = 'https://project-dashboard-production-3b4b.up.railway.app/api/tasks';
+        const LOCAL_API = 'http://localhost:3001/api/tasks';
+        
+        // Use production API in production, localhost otherwise
+        const API_URL = isProduction ? PRODUCTION_API : (localStorage.getItem('kanban-api') || LOCAL_API);
+        
         let tasks = [];
         let draggedCard = null;
         let currentFilter = 'all';
@@ -1065,12 +1148,20 @@
             const statusDot = document.getElementById('statusDot');
             const statusText = document.getElementById('statusText');
             
+            if (isProduction) {
+                // In production, use API directly
+                statusDot.className = 'status-dot connected';
+                statusText.textContent = '● Tempo Real';
+                fetchTasks();
+                return;
+            }
+            
             try {
                 const response = await fetch('http://localhost:3001/api/status', { timeout: 3000 });
                 if (response.ok) {
                     statusDot.className = 'status-dot connected';
                     statusText.textContent = '● Tempo Real';
-                    localStorage.setItem('kanban-api', 'http://localhost:3001/api/tasks');
+                    localStorage.setItem('kanban-api', LOCAL_API);
                 } else {
                     throw new Error('Connection failed');
                 }
@@ -1123,8 +1214,8 @@
         
         // Fetch tasks from API
         async function fetchTasks() {
-            const api = localStorage.getItem('kanban-api') || 'demo';
-            if (api === 'demo') return;
+            // Always try to fetch - use API_URL which handles production detection
+            if (API_URL === 'demo' || !API_URL) return;
             
             try {
                 const response = await fetch(`${API_URL}?t=${Date.now()}`, { timeout: 5000 });
@@ -1268,8 +1359,8 @@
         
         // API Operations
         async function saveTasksAPI() {
-            const api = localStorage.getItem('kanban-api');
-            if (api === 'demo') {
+            // Always try to save to API
+            if (API_URL === 'demo' || !API_URL) {
                 localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
                 return;
             }
@@ -1281,6 +1372,7 @@
                     body: JSON.stringify({ action: 'updateAll', tasks })
                 });
             } catch (e) {
+                console.error('Failed to save tasks:', e);
                 localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
             }
         }
@@ -1356,13 +1448,9 @@
         
         async function deleteTask() {
             const id = document.getElementById('taskId').value;
-            if (id && confirm('Excluir esta task?')) {
-                tasks = tasks.filter(t => t.id !== parseInt(id));
-                await saveTasksAPI();
-                renderTasks();
-                updateStats();
-                closeModal();
-                showToast('Task excluída', 'error');
+            const task = tasks.find(t => t.id === parseInt(id));
+            if (id && task) {
+                showDeleteConfirm(task.title);
             }
         }
         
@@ -1446,6 +1534,31 @@
         
         document.getElementById('taskModal').addEventListener('click', (e) => {
             if (e.target.id === 'taskModal') closeModal();
+        });
+        
+        // Modal de confirmação de exclusão
+        function showDeleteConfirm(taskTitle) {
+            document.getElementById('deleteConfirmTitle').textContent = taskTitle;
+            document.getElementById('deleteConfirmModal').classList.add('show');
+        }
+        
+        function closeDeleteConfirm() {
+            document.getElementById('deleteConfirmModal').classList.remove('show');
+        }
+        
+        function confirmDelete() {
+            const id = document.getElementById('taskId').value;
+            tasks = tasks.filter(t => t.id !== parseInt(id));
+            saveTasksAPI();
+            renderTasks();
+            updateStats();
+            closeModal();
+            closeDeleteConfirm();
+            showToast('Task excluída', 'error');
+        }
+        
+        document.getElementById('deleteConfirmModal').addEventListener('click', (e) => {
+            if (e.target.id === 'deleteConfirmModal') closeDeleteConfirm();
         });
     </script>
 </body>
