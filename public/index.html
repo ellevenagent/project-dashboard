@@ -1179,6 +1179,7 @@
     </div>
     
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
         // API Configuration
         const API_BASE = window.location.origin;
@@ -1221,6 +1222,21 @@
                 
                 socket.on('connect_error', (err) => {
                     console.warn('WebSocket connection error:', err.message);
+                });
+                
+                // Listen for dev status updates from other clients
+                socket.on('dev:status', (data) => {
+                    const statusEl = document.getElementById('devStatus');
+                    const textEl = document.getElementById('devStatusText');
+                    statusEl.className = `dev-status ${data.status}`;
+                    textEl.textContent = data.message;
+                });
+                
+                // Listen for activity broadcasts
+                socket.on('activity:broadcast', (data) => {
+                    if (data.clientId !== socket.id) {
+                        addActivity(data.message);
+                    }
                 });
                 
             } catch (e) {
@@ -1266,21 +1282,6 @@
         function setIdle() {
             setDevStatus('idle', 'Ocioso');
         }
-        
-        // Listen for dev status updates from other clients
-        socket.on('dev:status', (data) => {
-            const statusEl = document.getElementById('devStatus');
-            const textEl = document.getElementById('devStatusText');
-            statusEl.className = `dev-status ${data.status}`;
-            textEl.textContent = data.message;
-        });
-        
-        // Listen for activity broadcasts
-        socket.on('activity:broadcast', (data) => {
-            if (data.clientId !== socket.id) {
-                addActivity(data.message);
-            }
-        });
         
         // API Functions
         async function fetchTasks() {
