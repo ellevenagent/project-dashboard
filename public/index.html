@@ -1220,6 +1220,19 @@
                     showToast('Atualizado em tempo real!', 'success');
                 });
                 
+                // Listen for Clawd task notifications
+                socket.on('clawd:task', (data) => {
+                    console.log('🔔 Clawd task notification:', data.message);
+                    // Show notification
+                    showToast(data.message, 'info');
+                    // Play notification sound (optional)
+                    playNotificationSound();
+                    // Set working status
+                    setWorking(data.task.title);
+                    // Add to activity
+                    addActivity(data.message);
+                });
+                
                 socket.on('connect_error', (err) => {
                     console.warn('WebSocket connection error:', err.message);
                 });
@@ -1281,6 +1294,25 @@
         
         function setIdle() {
             setDevStatus('idle', 'Ocioso');
+        }
+        
+        function playNotificationSound() {
+            try {
+                // Simple notification beep using Web Audio API
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                gainNode.gain.value = 0.1;
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (e) {}
         }
         
         // API Functions

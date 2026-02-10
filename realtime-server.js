@@ -118,6 +118,13 @@ async function saveTaskPG(task) {
                 task.assignee, task.priority, task.emoji, task.dueDate,
                 Date.now(), Date.now()
             ]);
+            
+            // Notify if this is a Clawd task
+            const assignee = (task.assignee || '').toLowerCase();
+            if (assignee.includes('clawd') || assignee.includes('jarvis')) {
+                const newTask = { ...task, id: Date.now() };
+                broadcastClawdNotification(newTask);
+            }
         }
         return true;
     } catch (e) {
@@ -141,6 +148,31 @@ function broadcastTasks() {
     if (io && usePostgres) {
         getTasksPG().then(tasks => {
             io.emit('tasks:update', { tasks, timestamp: Date.now() });
+        });
+    }
+}
+
+// Broadcast notification for Clawd tasks
+function broadcastClawdNotification(task) {
+    if (io && usePostgres) {
+        const assignee = (task.assignee || '').toLowerCase();
+        if (assignee.includes('clawd') || assignee.includes('jarvis')) {
+            io.emit('clawd:task', {
+                task: task,
+                message: `📋 Nova task para Clawd: ${task.title}`,
+                timestamp: Date.now()
+            });
+            console.log(`🔔 Notificação Clawd: ${task.title}`);
+        }
+    }
+}
+
+// Broadcast activity
+function broadcastActivity(message) {
+    if (io) {
+        io.emit('activity:broadcast', {
+            message: message,
+            timestamp: Date.now()
         });
     }
 }
