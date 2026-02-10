@@ -96,33 +96,50 @@ async function getTasksPG() {
 async function saveTaskPG(task) {
     try {
         if (!pgClient) {
-            console.error('pgClient is null');
+            console.error('pgClient is null - reconnecting...');
             return false;
         }
         
         if (task.id && task.id > 0) {
-            // Update existing
-            const result = await pgClient.query(`
-                UPDATE tasks SET 
-                    title = $1, description = $2, column_name = $3, tag = $4,
-                    assignee = $5, priority = $6, emoji = $7, due_date = $8,
-                    updated_at = $9
-                WHERE id = $10
-            `, [
-                task.title, task.description, task.column, task.tag,
-                task.assignee, task.priority, task.emoji, task.dueDate,
-                task.updatedAt || Date.now(), task.id
-            ]);
-            console.log(`Updated task ${task.id}: ${result.rowCount} rows affected`);
-            return result.rowCount > 0;
+            // Update - only update what's provided
+            const updates = [];
+            const values = [];
+            let paramNum = 1;
+            
+            if (task.column !== undefined) {
+                updates.push(`column_name = $${paramNum++}`);
+                values.push(task.column);
+            }
+            if (task.title !== undefined) {
+                updates.push(`title = $${paramNum++}`);
+                values.push(task.title);
+            }
+            if (task.description !== undefined) {
+                updates.push(`description = $${paramNum++}`);
+                values.push(task.description);
+            }
+            if (task.updatedAt !== undefined) {
+                updates.push(`updated_at = $${paramNum++}`);
+                values.push(task.updatedAt);
+            }
+            
+            values.push(task.id);
+            
+            if (updates.length > 0) {
+                const query = `UPDATE tasks SET ${updates.join(', ')}, updated_at = $${paramNum} WHERE id = $${paramNum + 1}`;
+                const result = await pgClient.query(query, [...values, Date.now(), task.id]);
+                console.log(`UPDATE task ${task.id}: ${result.rowCount} rows affected`);
+                return result.rowCount > 0;
+            }
+            return true;
         } else {
             // Insert new
             await pgClient.query(`
                 INSERT INTO tasks (title, description, column_name, tag, assignee, priority, emoji, due_date, created_at, updated_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             `, [
-                task.title, task.description, task.column || 'backlog', task.tag,
-                task.assignee, task.priority, task.emoji, task.dueDate,
+                task.title || '', task.description || '', task.column || 'backlog', task.tag || '',
+                task.assignee || '', task.priority || 'medium', task.emoji || '', task.dueDate || '',
                 Date.now(), Date.now()
             ]);
             
@@ -135,7 +152,7 @@ async function saveTaskPG(task) {
             return true;
         }
     } catch (e) {
-        console.error('Erro saveTask:', e.message);
+        console.error('Erro saveTask:', e.message, e.stack);
         return false;
     }
 }
@@ -154,10 +171,20 @@ async function deleteTaskPG(taskId) {
 function broadcastTasks() {
     if (io && usePostgres) {
         getTasksPG().then(tasks => {
+            console.log(`📡 Broadcasting ${tasks.length} tasks to ${io.engine.clientsCount} clients`);
             io.emit('tasks:update', { tasks, timestamp: Date.now() });
+        }).catch(err => {
+            console.error('Error broadcasting tasks:', err.message);
         });
     }
 }
+
+// Force broadcast function (for debugging)
+global.forceBroadcast = function() {
+    console.log('🔄 Force broadcast triggered');
+    broadcastTasks();
+    return 'Broadcast triggered';
+};
 
 // Broadcast notification for Clawd tasks
 function broadcastClawdNotification(task) {
@@ -248,10 +275,16 @@ const server = http.createServer(async (req, res) => {
                 const data = JSON.parse(body);
                 let success = false;
                 
+                console.log(`POST /api/tasks action=${data.action} taskId=${data.task?.id || 'new'}`);
+                
                 if (data.action === 'update' && data.task) {
                     if (usePostgres) {
                         success = await saveTaskPG({ ...data.task, updatedAt: Date.now() });
-                        if (success) broadcastTasks();
+                        console.log(`saveTaskPG result: ${success}`);
+                        if (success) {
+                            console.log('Calling broadcastTasks...');
+                            broadcastTasks();
+                        }
                     } else {
                         let tasks = getTasksLocal();
                         const idx = tasks.findIndex(t => t.id === data.task.id);
