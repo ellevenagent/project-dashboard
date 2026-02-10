@@ -1321,11 +1321,12 @@
                 const response = await fetch(`${API_BASE}/api/tasks`);
                 const data = await response.json();
                 apiSource = data.source || 'api';
+                useApi = true; // Reset to true on successful API call
                 return data.tasks || [];
             } catch (e) {
-                console.warn('API unavailable, using localStorage');
-                useApi = false;
-                return JSON.parse(localStorage.getItem('kanban-tasks')) || [];
+                console.warn('API unavailable, using cached data');
+                // Return cached tasks, don't fallback to localStorage
+                return tasks.length > 0 ? tasks : [];
             }
         }
         
