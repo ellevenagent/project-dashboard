@@ -19,9 +19,11 @@ let pgClient = null;
 
 async function initDatabase() {
     try {
+        // Railway provides DATABASE_URL or DATABASE_PUBLIC_URL
         const databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL;
         
         if (databaseUrl) {
+            console.log('🔄 Conectando ao PostgreSQL...');
             pgClient = new Client({
                 connectionString: databaseUrl,
                 ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📊 James Command Center - Project Dashboard v2.5</title>
+    <title>📊 Project Dashboard v3.0 - PostgreSQL</title>
     <style>
         :root {
             --bg-primary: #0f0f23;
@@ -803,9 +803,13 @@
 </head>
 <body>
     <header class="header">
-        <h1>📊 James Command Center v2.5</h1>
+        <h1>📊 Project Dashboard v3.0</h1>
         
         <div class="header-actions">
+            <button class="theme-auto" onclick="refreshTasks()" title="Atualizar tasks">
+                🔄
+            </button>
+            
             <div class="connection-status">
                 <span class="status-dot disconnected" id="statusDot"></span>
                 <span id="statusText">Conectando...</span>
@@ -1084,6 +1088,70 @@
     </div>
     
     <script>
+        // API Configuration
+        const API_BASE = window.location.origin;
+        let useApi = true;
+        let apiSource = 'unknown';
+        
+        // API Functions
+        async function fetchTasks() {
+            try {
+                const response = await fetch(`${API_BASE}/api/tasks`);
+                const data = await response.json();
+                apiSource = data.source || 'api';
+                return data.tasks || [];
+            } catch (e) {
+                console.warn('API unavailable, using localStorage');
+                useApi = false;
+                return JSON.parse(localStorage.getItem('kanban-tasks')) || [];
+            }
+        }
+        
+        async function saveTaskToApi(task, action) {
+            try {
+                const response = await fetch(`${API_BASE}/api/tasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, task })
+                });
+                const data = await response.json();
+                return data.success;
+            } catch (e) {
+                console.warn('API save failed, using localStorage');
+                useApi = false;
+                // Fallback to localStorage
+                let tasks = JSON.parse(localStorage.getItem('kanban-tasks')) || [];
+                if (action === 'update') {
+                    const idx = tasks.findIndex(t => t.id === task.id);
+                    if (idx !== -1) tasks[idx] = { ...tasks[idx], ...task, updatedAt: Date.now() };
+                } else if (action === 'add') {
+                    tasks.push({ ...task, id: Date.now(), createdAt: Date.now(), updatedAt: Date.now() });
+                } else if (action === 'delete') {
+                    tasks = tasks.filter(t => t.id !== task.id);
+                }
+                localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
+                return true;
+            }
+        }
+        
+        async function deleteTaskFromApi(taskId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/tasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', taskId })
+                });
+                const data = await response.json();
+                return data.success;
+            } catch (e) {
+                useApi = false;
+                let tasks = JSON.parse(localStorage.getItem('kanban-tasks')) || [];
+                tasks = tasks.filter(t => t.id !== taskId);
+                localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
+                return true;
+            }
+        }
+        
         // Auto Dark/Light Mode
         function initTheme() {
             const hour = new Date().getHours();
@@ -1100,32 +1168,27 @@
         }
         
         // Data Store
-        let tasks = JSON.parse(localStorage.getItem('kanban-tasks')) || [];
+        let tasks = [];
         let draggedCard = null;
         let currentFilter = 'all';
         let comments = JSON.parse(localStorage.getItem('kanban-comments')) || {};
         
-        // Seed Tasks Function - Creates initial tasks
-        function seedTasks() {
-            const seedData = [
-                // Backlog
-                { id: Date.now() + 1, title: "Implementar Webhooks/Telegram Notifications", description: "Adicionar notificações automáticas via webhook", column: "backlog", tag: "purple", assignee: "James", priority: "medium", emoji: "🔗", createdAt: Date.now() },
-                { id: Date.now() + 2, title: "Melhorar Comandos do Menu", description: "Completar seção de comandos rápidos", column: "backlog", tag: "blue", assignee: "Clawd", priority: "high", emoji: "⚡", createdAt: Date.now() },
-                // Progress
-                { id: Date.now() + 3, title: "Monitorar BTC Trading Game", description: "Acompanhar ciclo de 72h, próxima entrada ~$69K-$70K", column: "progress", tag: "yellow", assignee: "Clawd", priority: "high", emoji: "📊", createdAt: Date.now() },
-                { id: Date.now() + 4, title: "Manter Daily Crypto Reports", description: "Relatórios diários às 9h BRT para grupo Doninhas", column: "progress", tag: "yellow", assignee: "Clawd", priority: "high", emoji: "📈", createdAt: Date.now() },
-                // Done
-                { id: Date.now() + 5, title: "Project Dashboard v2.5", description: "Gráficos, export CSV/JSON, comentários, dark mode auto", column: "done", tag: "green", assignee: "Clawd", priority: "high", emoji: "🎯", createdAt: Date.now() }
-            ];
+        // Initialize - Load from API or localStorage
+        async function initData() {
+            tasks = await fetchTasks();
             
-            // Add seed tasks if empty
+            // Update connection status
+            if (useApi) {
+                const statusEl = document.getElementById('statusDot');
+                const textEl = document.getElementById('statusText');
+                statusEl.className = 'status-dot connected';
+                textEl.textContent = apiSource === 'postgresql' ? 'PostgreSQL' : 'API';
+                addActivity(`Conectado: ${apiSource}`);
+            }
+            
+            // Seed if empty
             if (tasks.length === 0) {
-                tasks = seedData;
-                localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
-                addActivity('Tasks baseadas carregadas');
-                showToast('Tasks inicializadas!', 'success');
-            } else {
-                showToast('Tasks já existem: ' + tasks.length, 'info');
+                await seedTasksApi();
             }
             
             renderTasks();
@@ -1133,18 +1196,39 @@
             updateCharts();
         }
         
-        document.addEventListener('DOMContentLoaded', () => {
-            initTheme();
-            // Set connection status
-            document.getElementById('statusDot').className = 'status-dot connected';
-            document.getElementById('statusText').textContent = 'Conectado';
-            // Auto-seed if empty
-            if (tasks.length === 0) {
-                setTimeout(seedTasks, 500);
+        // Seed Tasks via API
+        async function seedTasksApi() {
+            const seedData = [
+                { title: "Integrar PostgreSQL", description: "Banco de dados Railway para persistência real", column: "done", tag: "green", assignee: "Clawd", priority: "high", emoji: "🗄️", createdAt: Date.now() },
+                { title: "Deploy Railway", description: "Subir dashboard na Railway com Node.js", column: "done", tag: "blue", assignee: "James", priority: "high", emoji: "🚂", createdAt: Date.now() },
+                { title: "BTC Trading Bot", description: "Monitorar e executar trades automaticamente", column: "progress", tag: "yellow", assignee: "Clawd", priority: "high", emoji: "📊", createdAt: Date.now() },
+                { title: "Daily Crypto Reports", description: "Relatórios diários às 9h BRT", column: "progress", tag: "yellow", assignee: "Clawd", priority: "high", emoji: "📈", createdAt: Date.now() },
+                { title: "Melhorar Frontend", description: "Conectar frontend à API PostgreSQL", column: "backlog", tag: "purple", assignee: "Clawd", priority: "high", emoji: "⚡", createdAt: Date.now() }
+            ];
+            
+            for (const task of seedData) {
+                await saveTaskToApi(task, 'add');
             }
+            
+            tasks = await fetchTasks();
+            addActivity('Tasks carregadas do PostgreSQL');
+            showToast('Dashboard inicializado!', 'success');
+        }
+        
+        // Refresh tasks from API
+        async function refreshTasks() {
+            showToast('Atualizando...', 'info');
+            tasks = await fetchTasks();
             renderTasks();
             updateStats();
             updateCharts();
+            const source = useApi ? (apiSource === 'postgresql' ? 'PostgreSQL' : 'API') : 'Local';
+            showToast(`Atualizado (${source})`, 'success');
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            initData();
         });
         
         // Render Tasks
@@ -1290,7 +1374,7 @@
                 if (columnId === 'done' && !task.completedToday) {
                     task.completedToday = true;
                 }
-                localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
+                await saveTaskToApi(task, 'update');
                 renderTasks();
                 updateStats();
                 updateCharts();
@@ -1344,7 +1428,7 @@
             document.getElementById('taskModal').classList.remove('active');
         }
         
-        function saveTask(e) {
+        async function saveTask(e) {
             e.preventDefault();
             const id = document.getElementById('taskId').value;
             const taskData = {
@@ -1359,27 +1443,29 @@
             };
             
             if (id) {
+                taskData.id = parseInt(id);
+                await saveTaskToApi(taskData, 'update');
                 const idx = tasks.findIndex(t => t.id === parseInt(id));
                 if (idx !== -1) tasks[idx] = { ...tasks[idx], ...taskData };
                 showToast('Task atualizada!', 'success');
             } else {
-                tasks.push({ id: Date.now(), ...taskData, createdAt: Date.now() });
+                await saveTaskToApi(taskData, 'add');
+                tasks = await fetchTasks(); // Reload from API
                 addActivity('Nova task: ' + taskData.title);
                 showToast('Task criada!', 'success');
             }
             
-            localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
             renderTasks();
             updateStats();
             updateCharts();
             closeModal();
         }
         
-        function deleteTask() {
+        async function deleteTask() {
             const id = document.getElementById('taskId').value;
             if (id && confirm('Excluir esta task?')) {
-                tasks = tasks.filter(t => t.id !== parseInt(id));
-                localStorage.setItem('kanban-tasks', JSON.stringify(tasks));
+                await deleteTaskFromApi(parseInt(id));
+                tasks = await fetchTasks(); // Reload from API
                 renderTasks();
                 updateStats();
                 updateCharts();
