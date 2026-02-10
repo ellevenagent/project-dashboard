@@ -123,13 +123,19 @@ async function saveTaskPG(task) {
                 values.push(task.updatedAt);
             }
             
+            // Add updated_at timestamp
+            const timestamp = Date.now();
+            updates.push(`updated_at = $${paramNum++}`);
+            values.push(timestamp);
+            
             values.push(task.id);
             
             if (updates.length > 0) {
-                const query = `UPDATE tasks SET ${updates.join(', ')}, updated_at = $${paramNum} WHERE id = $${paramNum + 1}`;
-                const result = await pgClient.query(query, [...values, Date.now(), task.id]);
+                const query = `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${paramNum}`;
+                console.log(`Executing: ${query} with values: ${values}`);
+                const result = await pgClient.query(query, values);
                 console.log(`UPDATE task ${task.id}: ${result.rowCount} rows affected`);
-                return result.rowCount > 0;
+                return true; // Return true if no error, even if rowCount is 0
             }
             return true;
         } else {
