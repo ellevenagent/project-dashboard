@@ -1414,10 +1414,11 @@
             // Update connection status
             updateConnectionStatus();
             
-            // Seed if empty
-            if (tasks.length === 0) {
-                await seedTasksApi();
-            }
+            // DON'T seed automatically - only when explicitly requested
+            // Seed if empty (commented out to prevent overwriting)
+            // if (tasks.length === 0) {
+            //     await seedTasksApi();
+            // }
             
             renderTasks();
             updateStats();
