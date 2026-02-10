@@ -118,24 +118,21 @@ async function saveTaskPG(task) {
                 updates.push(`description = $${paramNum++}`);
                 values.push(task.description);
             }
-            if (task.updatedAt !== undefined) {
-                updates.push(`updated_at = $${paramNum++}`);
-                values.push(task.updatedAt);
-            }
             
-            // Add updated_at timestamp
-            const timestamp = Date.now();
+            // Always update updated_at
             updates.push(`updated_at = $${paramNum++}`);
-            values.push(timestamp);
+            values.push(Date.now());
             
+            // Add task.id as the last parameter
             values.push(task.id);
             
             if (updates.length > 0) {
                 const query = `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${paramNum}`;
-                console.log(`Executing: ${query} with values: ${values}`);
+                console.log(`Executing UPDATE: ${query}`);
+                console.log(`Values: ${JSON.stringify(values)}`);
                 const result = await pgClient.query(query, values);
-                console.log(`UPDATE task ${task.id}: ${result.rowCount} rows affected`);
-                return true; // Return true if no error, even if rowCount is 0
+                console.log(`Result: ${result.rowCount} rows affected`);
+                return true; // Return true if no error
             }
             return true;
         } else {
