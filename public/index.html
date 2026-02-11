@@ -896,50 +896,49 @@
             
             /* Header mobile - 2 linhas */
             .header { 
-                flex-wrap: wrap !important; 
+                flex-direction: column;
+                align-items: center;
                 gap: 6px;
                 padding: 8px;
-                justify-content: center;
                 overflow-x: hidden;
                 max-width: 100vw;
             }
             .header h1 {
                 font-size: 0.9rem;
-                order: 1;
                 width: 100%;
                 text-align: center;
                 white-space: normal;
+                margin: 0;
             }
             .header-actions {
-                order: 2;
-                gap: 4px;
                 display: flex;
                 flex-wrap: wrap;
                 justify-content: center;
+                gap: 4px;
+                width: 100%;
             }
             .header-actions .dev-status,
             .header-actions .theme-auto,
+            .header-actions .connection-status,
             .header-actions .btn-primary {
                 padding: 4px 6px;
                 font-size: 0.65rem;
             }
             .header-stats { 
-                order: 3; 
-                width: 100%; 
+                display: flex;
                 justify-content: center;
                 gap: 4px;
+                width: 100%;
                 margin-top: 4px;
-                display: flex;
-                flex-wrap: wrap;
             }
-            .stat-item {
+            .header-stats .stat-item {
                 padding: 2px 6px;
                 min-width: auto;
             }
-            .stat-value {
+            .header-stats .stat-value {
                 font-size: 0.85rem;
             }
-            .stat-label {
+            .header-stats .stat-label {
                 font-size: 0.55rem;
             }
         }
@@ -969,27 +968,27 @@
                 <span id="statusText">Conectando...</span>
             </div>
             
-            <div class="header-stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="stat-total">0</div>
-                    <div class="stat-label">Total</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="stat-progress">0</div>
-                    <div class="stat-label">Andamento</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="stat-done">0</div>
-                    <div class="stat-label">Concluído</div>
-                </div>
-            </div>
-            
             <button class="theme-auto" onclick="toggleTheme()">
                 <span id="theme-icon">🕐</span>
                 <span id="theme-text">Auto</span>
             </button>
             
             <button class="btn btn-primary" onclick="openModal('add')">➕ Nova Task</button>
+        </div>
+        
+        <div class="header-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-progress">0</div>
+                <div class="stat-label">Andamento</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-done">0</div>
+                <div class="stat-label">Concluído</div>
+            </div>
         </div>
     </header>
     
