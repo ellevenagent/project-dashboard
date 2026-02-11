@@ -769,6 +769,13 @@
             border-top: 1px solid var(--border-color);
         }
         
+        .modal-body {
+            padding: 16px 0;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        
         .btn {
             padding: 8px 16px;
             border-radius: 8px;
@@ -780,6 +787,15 @@
             display: flex;
             align-items: center;
             gap: 6px;
+        }
+        
+        .btn-danger {
+            background: var(--accent-red);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc3545;
         }
         
         .btn-primary {
@@ -1178,6 +1194,23 @@
         <span id="toastMessage"></span>
     </div>
     
+    <!-- Modal de Confirmação de Exclusão -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="confirmTitle">⚠️ Confirmar Exclusão</h3>
+                <button class="modal-close" onclick="closeConfirmModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="confirmMessage">
+                Tem certeza que deseja excluir esta task?
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancelar</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">🗑️ Excluir</button>
+            </div>
+        </div>
+    </div>
+    
     <script src="/socket.io/socket.io.js"></script>
     <script>
         // API Configuration
@@ -1536,7 +1569,8 @@
             today.setHours(0, 0, 0, 0);
             const doneToday = tasks.filter(t => {
                 if (t.column !== 'done') return false;
-                const updated = new Date(parseInt(t.updatedAt));
+                const timestamp = Number(t.updatedAt) || 0;
+                const updated = new Date(timestamp);
                 updated.setHours(0, 0, 0, 0);
                 return updated.getTime() === today.getTime();
             }).length;
@@ -1655,6 +1689,31 @@
             document.getElementById('taskModal').classList.remove('active');
         }
         
+        // Modal de Confirmação de Exclusão
+        let pendingDeleteId = null;
+        
+        function openConfirmModal(taskId) {
+            pendingDeleteId = taskId;
+            document.getElementById('confirmModal').classList.add('active');
+        }
+        
+        function closeConfirmModal() {
+            pendingDeleteId = null;
+            document.getElementById('confirmModal').classList.remove('active');
+        }
+        
+        async function confirmDelete() {
+            if (pendingDeleteId) {
+                await deleteTaskFromApi(pendingDeleteId);
+                tasks = await fetchTasks(); // Reload from API
+                renderTasks();
+                updateStats();
+                updateCharts();
+                closeConfirmModal();
+                showToast('Task excluída', 'error');
+            }
+        }
+        
         async function saveTask(e) {
             e.preventDefault();
             const id = document.getElementById('taskId').value;
@@ -1688,16 +1747,12 @@
             closeModal();
         }
         
-        async function deleteTask() {
-            const id = document.getElementById('taskId').value;
-            if (id && confirm('Excluir esta task?')) {
-                await deleteTaskFromApi(parseInt(id));
-                tasks = await fetchTasks(); // Reload from API
-                renderTasks();
-                updateStats();
-                updateCharts();
+        async function deleteTask(id) {
+            // Se id não for passado, pega do campo hidden do modal
+            const taskId = id || document.getElementById('taskId').value;
+            if (taskId) {
+                openConfirmModal(parseInt(taskId));
                 closeModal();
-                showToast('Task excluída', 'error');
             }
         }
         
