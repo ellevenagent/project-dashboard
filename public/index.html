@@ -1532,7 +1532,14 @@
             });
             
             // Productivity metrics
-            const doneToday = tasks.filter(t => t.column === 'done' && t.completedToday).length;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const doneToday = tasks.filter(t => {
+                if (t.column !== 'done') return false;
+                const updated = new Date(parseInt(t.updatedAt));
+                updated.setHours(0, 0, 0, 0);
+                return updated.getTime() === today.getTime();
+            }).length;
             document.getElementById('prod-completed').textContent = doneToday;
             document.getElementById('prod-rate').textContent = total ? Math.round((counts.done / total) * 100) + '%' : '0%';
         }
