@@ -893,8 +893,49 @@
             .main-container { grid-template-columns: 1fr; }
             .sidebar { display: none; }
             .kanban-column { min-width: 280px; }
-            .header { flex-wrap: wrap; gap: 12px; }
-            .header-stats { order: 3; width: 100%; justify-content: center; }
+            
+            /* Header mobile - 2 linhas */
+            .header { 
+                flex-wrap: wrap; 
+                gap: 8px;
+                padding: 12px;
+                justify-content: center;
+            }
+            .header h1 {
+                font-size: 1rem;
+                order: 1;
+                width: 100%;
+                text-align: center;
+            }
+            .header-actions {
+                order: 2;
+                gap: 8px;
+            }
+            .dev-status {
+                padding: 4px 8px;
+                font-size: 0.7rem;
+            }
+            .theme-auto {
+                padding: 4px 8px;
+                font-size: 0.7rem;
+            }
+            .header-stats { 
+                order: 3; 
+                width: 100%; 
+                justify-content: center;
+                gap: 6px;
+                margin-top: 4px;
+            }
+            .stat-item {
+                padding: 4px 8px;
+                min-width: 50px;
+            }
+            .stat-value {
+                font-size: 1rem;
+            }
+            .stat-label {
+                font-size: 0.6rem;
+            }
         }
         
         ::-webkit-scrollbar { width: 8px; height: 8px; }
